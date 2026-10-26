@@ -1,0 +1,18 @@
+{
+  "name": "circuitcode",
+  "version": "1.0.0",
+  "description": "Practice Arduino circuits and firmware in the browser: build, program and get judged by a deterministic hardware simulator.",
+  "type": "module",
+  "private": true,
+  "license": "MIT",
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "start": "node scripts/serve.mjs",
+    "test": "node --test tests/engine.test.mjs tests/bank.test.mjs tests/samples.test.mjs",
+    "test:engine": "node --test tests/engine.test.mjs",
+    "test:samples": "node --test tests/samples.test.mjs",
+    "judge": "node scripts/judge-cli.mjs",
+    "catalog": "node scripts/catalog.mjs"
+  },
+  "keywords": ["arduino", "electronics", "simulator", "education", "judge", "embedded"]
+}

@@ -1,0 +1,69 @@
+{
+  "problem": "binary-counter",
+  "title": "Binary Counter",
+  "difficulty": "Medium",
+  "expected": {
+    "verdict": "Accepted",
+    "used": 4,
+    "score": 100
+  },
+  "circuit": {
+    "parts": [
+      {
+        "id": "BTN1",
+        "type": "BTN",
+        "x": 290,
+        "y": 80
+      },
+      {
+        "id": "LED1",
+        "type": "LED",
+        "x": 460,
+        "y": 80
+      },
+      {
+        "id": "LED2",
+        "type": "LED",
+        "x": 640,
+        "y": 80
+      },
+      {
+        "id": "RES1",
+        "type": "RES",
+        "x": 290,
+        "y": 190
+      }
+    ],
+    "wires": [
+      [
+        "BTN1.1",
+        "mcu.D2"
+      ],
+      [
+        "BTN1.2",
+        "mcu.GND"
+      ],
+      [
+        "mcu.D3",
+        "LED1.A"
+      ],
+      [
+        "mcu.D4",
+        "LED2.A"
+      ],
+      [
+        "LED1.K",
+        "RES1.1"
+      ],
+      [
+        "LED2.K",
+        "RES1.1"
+      ],
+      [
+        "RES1.2",
+        "mcu.GND"
+      ]
+    ]
+  },
+  "code": "var count = 0, last = HIGH;\n\nfunction setup() {\n  pinMode(2, INPUT_PULLUP);\n  pinMode(3, OUTPUT);\n  pinMode(4, OUTPUT);\n}\n\nfunction loop() {\n  var r = digitalRead(2);\n  if (last === HIGH && r === LOW) count = (count + 1) % 4;\n  last = r;\n  digitalWrite(3, count & 1);\n  digitalWrite(4, count & 2 ? HIGH : LOW);\n  delay(1);\n}\n"
+}

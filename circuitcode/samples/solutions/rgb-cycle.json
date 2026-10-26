@@ -1,0 +1,49 @@
+{
+  "problem": "rgb-cycle",
+  "title": "Colour Wheel",
+  "difficulty": "Easy",
+  "expected": {
+    "verdict": "Accepted",
+    "used": 2,
+    "score": 100
+  },
+  "circuit": {
+    "parts": [
+      {
+        "id": "RGB1",
+        "type": "RGB",
+        "x": 290,
+        "y": 90
+      },
+      {
+        "id": "RES1",
+        "type": "RES",
+        "x": 460,
+        "y": 90
+      }
+    ],
+    "wires": [
+      [
+        "mcu.D3",
+        "RGB1.R"
+      ],
+      [
+        "mcu.D5",
+        "RGB1.G"
+      ],
+      [
+        "mcu.D6",
+        "RGB1.B"
+      ],
+      [
+        "RGB1.K",
+        "RES1.1"
+      ],
+      [
+        "RES1.2",
+        "mcu.GND"
+      ]
+    ]
+  },
+  "code": "var p=[3,5,6],i=0; function setup(){p.forEach(function(x){pinMode(x,OUTPUT);});} function loop(){for(var k=0;k<3;k++)digitalWrite(p[k],k===i);delay(400);i=(i+1)%3;}"
+}

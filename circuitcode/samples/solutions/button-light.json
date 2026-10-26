@@ -1,0 +1,55 @@
+{
+  "problem": "button-light",
+  "title": "Button Light",
+  "difficulty": "Easy",
+  "expected": {
+    "verdict": "Accepted",
+    "used": 3,
+    "score": 100
+  },
+  "circuit": {
+    "parts": [
+      {
+        "id": "LED1",
+        "type": "LED",
+        "x": 290,
+        "y": 80
+      },
+      {
+        "id": "RES1",
+        "type": "RES",
+        "x": 460,
+        "y": 80
+      },
+      {
+        "id": "BTN1",
+        "type": "BTN",
+        "x": 640,
+        "y": 80
+      }
+    ],
+    "wires": [
+      [
+        "mcu.D3",
+        "RES1.1"
+      ],
+      [
+        "RES1.2",
+        "LED1.A"
+      ],
+      [
+        "LED1.K",
+        "mcu.GND"
+      ],
+      [
+        "BTN1.1",
+        "mcu.D2"
+      ],
+      [
+        "BTN1.2",
+        "mcu.GND"
+      ]
+    ]
+  },
+  "code": "function setup(){pinMode(2,INPUT_PULLUP);pinMode(3,OUTPUT);} function loop(){digitalWrite(3,digitalRead(2)===LOW?HIGH:LOW);}"
+}

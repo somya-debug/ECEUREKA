@@ -1,0 +1,73 @@
+{
+  "problem": "dimmer",
+  "title": "Dimmer Switch",
+  "difficulty": "Medium",
+  "expected": {
+    "verdict": "Accepted",
+    "used": 4,
+    "score": 100
+  },
+  "circuit": {
+    "parts": [
+      {
+        "id": "POT1",
+        "type": "POT",
+        "x": 290,
+        "y": 80
+      },
+      {
+        "id": "BTN1",
+        "type": "BTN",
+        "x": 460,
+        "y": 80
+      },
+      {
+        "id": "LED1",
+        "type": "LED",
+        "x": 640,
+        "y": 80
+      },
+      {
+        "id": "RES1",
+        "type": "RES",
+        "x": 290,
+        "y": 220
+      }
+    ],
+    "wires": [
+      [
+        "POT1.1",
+        "mcu.GND"
+      ],
+      [
+        "POT1.2",
+        "mcu.5V"
+      ],
+      [
+        "POT1.W",
+        "mcu.A0"
+      ],
+      [
+        "BTN1.1",
+        "mcu.D2"
+      ],
+      [
+        "BTN1.2",
+        "mcu.GND"
+      ],
+      [
+        "mcu.D9",
+        "RES1.1"
+      ],
+      [
+        "RES1.2",
+        "LED1.A"
+      ],
+      [
+        "LED1.K",
+        "mcu.GND"
+      ]
+    ]
+  },
+  "code": "var on=true,last=1; function setup(){pinMode(2,INPUT_PULLUP);} function loop(){ var b=digitalRead(2); if(last===1&&b===0){on=!on;delay(30);b=digitalRead(2);} last=b; analogWrite(9, on? Math.floor(analogRead(A0)/4):0); delay(5);}"
+}

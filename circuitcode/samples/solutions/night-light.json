@@ -1,0 +1,69 @@
+{
+  "problem": "night-light",
+  "title": "Night Light",
+  "difficulty": "Easy",
+  "expected": {
+    "verdict": "Accepted",
+    "used": 4,
+    "score": 100
+  },
+  "circuit": {
+    "parts": [
+      {
+        "id": "LDR1",
+        "type": "LDR",
+        "x": 290,
+        "y": 80
+      },
+      {
+        "id": "RES1",
+        "type": "RES",
+        "x": 460,
+        "y": 80
+      },
+      {
+        "id": "LED1",
+        "type": "LED",
+        "x": 640,
+        "y": 80
+      },
+      {
+        "id": "RES2",
+        "type": "RES",
+        "x": 290,
+        "y": 190
+      }
+    ],
+    "wires": [
+      [
+        "mcu.5V",
+        "LDR1.1"
+      ],
+      [
+        "LDR1.2",
+        "mcu.A0"
+      ],
+      [
+        "mcu.A0",
+        "RES1.1"
+      ],
+      [
+        "RES1.2",
+        "mcu.GND"
+      ],
+      [
+        "mcu.D4",
+        "RES2.1"
+      ],
+      [
+        "RES2.2",
+        "LED1.A"
+      ],
+      [
+        "LED1.K",
+        "mcu.GND"
+      ]
+    ]
+  },
+  "code": "function setup(){pinMode(4,OUTPUT);} function loop(){digitalWrite(4, analogRead(A0)<450?HIGH:LOW); delay(10);}"
+}

@@ -1,0 +1,69 @@
+{
+  "problem": "short-long",
+  "title": "Short Press, Long Press",
+  "difficulty": "Hard",
+  "expected": {
+    "verdict": "Accepted",
+    "used": 4,
+    "score": 100
+  },
+  "circuit": {
+    "parts": [
+      {
+        "id": "BTN1",
+        "type": "BTN",
+        "x": 290,
+        "y": 80
+      },
+      {
+        "id": "LED1",
+        "type": "LED",
+        "x": 460,
+        "y": 80
+      },
+      {
+        "id": "LED2",
+        "type": "LED",
+        "x": 640,
+        "y": 80
+      },
+      {
+        "id": "RES1",
+        "type": "RES",
+        "x": 290,
+        "y": 190
+      }
+    ],
+    "wires": [
+      [
+        "BTN1.1",
+        "mcu.D2"
+      ],
+      [
+        "BTN1.2",
+        "mcu.GND"
+      ],
+      [
+        "mcu.D3",
+        "LED1.A"
+      ],
+      [
+        "mcu.D4",
+        "LED2.A"
+      ],
+      [
+        "LED1.K",
+        "RES1.1"
+      ],
+      [
+        "LED2.K",
+        "RES1.1"
+      ],
+      [
+        "RES1.2",
+        "mcu.GND"
+      ]
+    ]
+  },
+  "code": "var st = HIGH, changedAt = -100, downAt = 0, a = 0, b = 0;\n\nfunction setup() {\n  pinMode(2, INPUT_PULLUP);\n  pinMode(3, OUTPUT);\n  pinMode(4, OUTPUT);\n}\n\nfunction loop() {\n  var now = millis(), r = digitalRead(2);\n  if (r !== st && now - changedAt > 40) {\n    st = r; changedAt = now;\n    if (r === LOW) downAt = now;\n    else if (now - downAt < 500) a = !a; else b = !b;\n  }\n  digitalWrite(3, a);\n  digitalWrite(4, b);\n  delay(1);\n}\n"
+}

@@ -1,0 +1,55 @@
+{
+  "problem": "alternate",
+  "title": "Alternating LEDs",
+  "difficulty": "Medium",
+  "expected": {
+    "verdict": "Accepted",
+    "used": 3,
+    "score": 100
+  },
+  "circuit": {
+    "parts": [
+      {
+        "id": "LED1",
+        "type": "LED",
+        "x": 290,
+        "y": 80
+      },
+      {
+        "id": "LED2",
+        "type": "LED",
+        "x": 460,
+        "y": 80
+      },
+      {
+        "id": "RES1",
+        "type": "RES",
+        "x": 640,
+        "y": 80
+      }
+    ],
+    "wires": [
+      [
+        "mcu.D2",
+        "RES1.1"
+      ],
+      [
+        "RES1.2",
+        "LED1.A"
+      ],
+      [
+        "LED1.K",
+        "mcu.D3"
+      ],
+      [
+        "mcu.D3",
+        "LED2.A"
+      ],
+      [
+        "LED2.K",
+        "RES1.2"
+      ]
+    ]
+  },
+  "code": "var s=0;function setup(){pinMode(2,OUTPUT);pinMode(3,OUTPUT);} function loop(){digitalWrite(2,s);digitalWrite(3,!s);s=!s;delay(250);}"
+}

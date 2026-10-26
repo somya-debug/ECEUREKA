@@ -1,0 +1,69 @@
+{
+  "problem": "ping-pong",
+  "title": "Ping-Pong Chase",
+  "difficulty": "Medium",
+  "expected": {
+    "verdict": "Accepted",
+    "used": 4,
+    "score": 100
+  },
+  "circuit": {
+    "parts": [
+      {
+        "id": "LED1",
+        "type": "LED",
+        "x": 290,
+        "y": 80
+      },
+      {
+        "id": "LED2",
+        "type": "LED",
+        "x": 460,
+        "y": 80
+      },
+      {
+        "id": "LED3",
+        "type": "LED",
+        "x": 640,
+        "y": 80
+      },
+      {
+        "id": "RES1",
+        "type": "RES",
+        "x": 290,
+        "y": 190
+      }
+    ],
+    "wires": [
+      [
+        "mcu.D3",
+        "LED1.A"
+      ],
+      [
+        "mcu.D4",
+        "LED2.A"
+      ],
+      [
+        "mcu.D5",
+        "LED3.A"
+      ],
+      [
+        "LED1.K",
+        "RES1.1"
+      ],
+      [
+        "LED2.K",
+        "RES1.1"
+      ],
+      [
+        "LED3.K",
+        "RES1.1"
+      ],
+      [
+        "RES1.2",
+        "mcu.GND"
+      ]
+    ]
+  },
+  "code": "var seq = [3, 4, 5, 4], i = 0;\n\nfunction setup() {\n  for (var p = 3; p <= 5; p++) pinMode(p, OUTPUT);\n}\n\nfunction loop() {\n  for (var p = 3; p <= 5; p++) digitalWrite(p, p === seq[i] ? HIGH : LOW);\n  i = (i + 1) % 4;\n  delay(200);\n}\n"
+}

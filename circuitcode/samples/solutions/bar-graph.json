@@ -1,0 +1,183 @@
+{
+  "problem": "bar-graph",
+  "title": "Shift-Register Bar Graph",
+  "difficulty": "Hard",
+  "expected": {
+    "verdict": "Accepted",
+    "used": 11,
+    "score": 100
+  },
+  "circuit": {
+    "parts": [
+      {
+        "id": "SR1",
+        "type": "SR",
+        "x": 290,
+        "y": 150
+      },
+      {
+        "id": "POT1",
+        "type": "POT",
+        "x": 460,
+        "y": 150
+      },
+      {
+        "id": "RES1",
+        "type": "RES",
+        "x": 640,
+        "y": 150
+      },
+      {
+        "id": "LED1",
+        "type": "LED",
+        "x": 290,
+        "y": 330
+      },
+      {
+        "id": "LED2",
+        "type": "LED",
+        "x": 460,
+        "y": 330
+      },
+      {
+        "id": "LED3",
+        "type": "LED",
+        "x": 640,
+        "y": 330
+      },
+      {
+        "id": "LED4",
+        "type": "LED",
+        "x": 290,
+        "y": 430
+      },
+      {
+        "id": "LED5",
+        "type": "LED",
+        "x": 460,
+        "y": 430
+      },
+      {
+        "id": "LED6",
+        "type": "LED",
+        "x": 640,
+        "y": 430
+      },
+      {
+        "id": "LED7",
+        "type": "LED",
+        "x": 290,
+        "y": 540
+      },
+      {
+        "id": "LED8",
+        "type": "LED",
+        "x": 460,
+        "y": 540
+      }
+    ],
+    "wires": [
+      [
+        "SR1.VCC",
+        "mcu.5V"
+      ],
+      [
+        "SR1.GND",
+        "mcu.GND"
+      ],
+      [
+        "SR1.DS",
+        "mcu.D2"
+      ],
+      [
+        "SR1.SH",
+        "mcu.D3"
+      ],
+      [
+        "SR1.ST",
+        "mcu.D4"
+      ],
+      [
+        "POT1.1",
+        "mcu.GND"
+      ],
+      [
+        "POT1.2",
+        "mcu.5V"
+      ],
+      [
+        "POT1.W",
+        "mcu.A0"
+      ],
+      [
+        "SR1.Q0",
+        "LED1.A"
+      ],
+      [
+        "LED1.K",
+        "RES1.1"
+      ],
+      [
+        "SR1.Q1",
+        "LED2.A"
+      ],
+      [
+        "LED2.K",
+        "RES1.1"
+      ],
+      [
+        "SR1.Q2",
+        "LED3.A"
+      ],
+      [
+        "LED3.K",
+        "RES1.1"
+      ],
+      [
+        "SR1.Q3",
+        "LED4.A"
+      ],
+      [
+        "LED4.K",
+        "RES1.1"
+      ],
+      [
+        "SR1.Q4",
+        "LED5.A"
+      ],
+      [
+        "LED5.K",
+        "RES1.1"
+      ],
+      [
+        "SR1.Q5",
+        "LED6.A"
+      ],
+      [
+        "LED6.K",
+        "RES1.1"
+      ],
+      [
+        "SR1.Q6",
+        "LED7.A"
+      ],
+      [
+        "LED7.K",
+        "RES1.1"
+      ],
+      [
+        "SR1.Q7",
+        "LED8.A"
+      ],
+      [
+        "LED8.K",
+        "RES1.1"
+      ],
+      [
+        "RES1.2",
+        "mcu.GND"
+      ]
+    ]
+  },
+  "code": "var last=-1; function setup(){pinMode(2,OUTPUT);pinMode(3,OUTPUT);pinMode(4,OUTPUT);} function loop(){ var n=Math.floor(analogRead(A0)*9/1024); if(n!==last){ shiftOut(2,3,MSBFIRST,(1<<n)-1); digitalWrite(4,0);digitalWrite(4,1);digitalWrite(4,0); last=n;} delay(5);}"
+}

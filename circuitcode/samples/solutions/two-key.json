@@ -1,0 +1,69 @@
+{
+  "problem": "two-key",
+  "title": "Two-Key Launch",
+  "difficulty": "Easy",
+  "expected": {
+    "verdict": "Accepted",
+    "used": 4,
+    "score": 100
+  },
+  "circuit": {
+    "parts": [
+      {
+        "id": "BTN1",
+        "type": "BTN",
+        "x": 290,
+        "y": 80
+      },
+      {
+        "id": "BTN2",
+        "type": "BTN",
+        "x": 460,
+        "y": 80
+      },
+      {
+        "id": "LED1",
+        "type": "LED",
+        "x": 640,
+        "y": 80
+      },
+      {
+        "id": "RES1",
+        "type": "RES",
+        "x": 290,
+        "y": 190
+      }
+    ],
+    "wires": [
+      [
+        "BTN1.1",
+        "mcu.D2"
+      ],
+      [
+        "BTN1.2",
+        "mcu.GND"
+      ],
+      [
+        "BTN2.1",
+        "mcu.D3"
+      ],
+      [
+        "BTN2.2",
+        "mcu.GND"
+      ],
+      [
+        "mcu.D4",
+        "RES1.1"
+      ],
+      [
+        "RES1.2",
+        "LED1.A"
+      ],
+      [
+        "LED1.K",
+        "mcu.GND"
+      ]
+    ]
+  },
+  "code": "function setup(){pinMode(2,INPUT_PULLUP);pinMode(3,INPUT_PULLUP);pinMode(4,OUTPUT);} function loop(){digitalWrite(4, !digitalRead(2) && !digitalRead(3));}"
+}

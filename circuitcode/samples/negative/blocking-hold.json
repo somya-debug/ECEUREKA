@@ -1,0 +1,58 @@
+{
+  "name": "blocking-hold",
+  "problem": "motion-lamp",
+  "description": "Uses delay(1000) after each sighting, so the lamp can switch off early.",
+  "expected": {
+    "verdict": "Wrong Answer",
+    "messageIncludes": "should be ON"
+  },
+  "circuit": {
+    "parts": [
+      {
+        "id": "PIR1",
+        "type": "PIR",
+        "x": 290,
+        "y": 80
+      },
+      {
+        "id": "LED1",
+        "type": "LED",
+        "x": 460,
+        "y": 80
+      },
+      {
+        "id": "RES1",
+        "type": "RES",
+        "x": 640,
+        "y": 80
+      }
+    ],
+    "wires": [
+      [
+        "PIR1.V",
+        "mcu.5V"
+      ],
+      [
+        "PIR1.G",
+        "mcu.GND"
+      ],
+      [
+        "PIR1.O",
+        "mcu.D7"
+      ],
+      [
+        "mcu.D4",
+        "RES1.1"
+      ],
+      [
+        "RES1.2",
+        "LED1.A"
+      ],
+      [
+        "LED1.K",
+        "mcu.GND"
+      ]
+    ]
+  },
+  "code": "function setup(){pinMode(7,INPUT);pinMode(4,OUTPUT);} function loop(){ if(digitalRead(7)){digitalWrite(4,1);delay(1000);} else digitalWrite(4,0); }"
+}

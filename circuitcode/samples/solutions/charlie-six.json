@@ -1,0 +1,135 @@
+{
+  "problem": "charlie-six",
+  "title": "Charlie's Six",
+  "difficulty": "Nearly Impossible",
+  "expected": {
+    "verdict": "Accepted",
+    "used": 9,
+    "score": 100
+  },
+  "circuit": {
+    "parts": [
+      {
+        "id": "LED1",
+        "type": "LED",
+        "x": 290,
+        "y": 80
+      },
+      {
+        "id": "LED2",
+        "type": "LED",
+        "x": 460,
+        "y": 80
+      },
+      {
+        "id": "LED3",
+        "type": "LED",
+        "x": 640,
+        "y": 80
+      },
+      {
+        "id": "LED4",
+        "type": "LED",
+        "x": 290,
+        "y": 190
+      },
+      {
+        "id": "LED5",
+        "type": "LED",
+        "x": 460,
+        "y": 190
+      },
+      {
+        "id": "LED6",
+        "type": "LED",
+        "x": 640,
+        "y": 190
+      },
+      {
+        "id": "RES1",
+        "type": "RES",
+        "x": 290,
+        "y": 300
+      },
+      {
+        "id": "RES2",
+        "type": "RES",
+        "x": 460,
+        "y": 300
+      },
+      {
+        "id": "BTN1",
+        "type": "BTN",
+        "x": 640,
+        "y": 300
+      }
+    ],
+    "wires": [
+      [
+        "mcu.D2",
+        "RES1.1"
+      ],
+      [
+        "mcu.D3",
+        "RES2.1"
+      ],
+      [
+        "RES1.2",
+        "LED1.A"
+      ],
+      [
+        "LED1.K",
+        "RES2.2"
+      ],
+      [
+        "RES2.2",
+        "LED2.A"
+      ],
+      [
+        "LED2.K",
+        "RES1.2"
+      ],
+      [
+        "RES1.2",
+        "LED3.A"
+      ],
+      [
+        "LED3.K",
+        "mcu.D4"
+      ],
+      [
+        "mcu.D4",
+        "LED4.A"
+      ],
+      [
+        "LED4.K",
+        "RES1.2"
+      ],
+      [
+        "RES2.2",
+        "LED5.A"
+      ],
+      [
+        "LED5.K",
+        "mcu.D4"
+      ],
+      [
+        "mcu.D4",
+        "LED6.A"
+      ],
+      [
+        "LED6.K",
+        "RES2.2"
+      ],
+      [
+        "BTN1.1",
+        "mcu.D5"
+      ],
+      [
+        "BTN1.2",
+        "mcu.GND"
+      ]
+    ]
+  },
+  "code": "// each LED: [anode pin, cathode pin]\nvar LED = { 1: [2, 3], 2: [3, 2], 3: [2, 4], 4: [4, 2], 5: [3, 4], 6: [4, 3] };\nvar PAT = [[1, 3, 5], [2, 4, 6], [1, 2, 3, 4, 5, 6]];\nvar pat = 0, st = HIGH, changedAt = -100;\n\nfunction setup() {\n  pinMode(5, INPUT_PULLUP);\n}\n\nfunction light(n) {\n  pinMode(2, INPUT); pinMode(3, INPUT); pinMode(4, INPUT);\n  pinMode(LED[n][0], OUTPUT); digitalWrite(LED[n][0], HIGH);\n  pinMode(LED[n][1], OUTPUT); digitalWrite(LED[n][1], LOW);\n}\n\nfunction loop() {\n  var list = PAT[pat];\n  for (var i = 0; i < list.length; i++) {\n    var now = millis(), r = digitalRead(5);\n    if (r !== st && now - changedAt > 25) {\n      st = r; changedAt = now;\n      if (r === LOW) pat = (pat + 1) % 3;\n    }\n    light(list[i]);\n    delay(1);\n  }\n}\n"
+}

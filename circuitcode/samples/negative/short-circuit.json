@@ -1,0 +1,44 @@
+{
+  "name": "short-circuit",
+  "problem": "hello-led",
+  "description": "Output pin driven HIGH while wired directly to GND.",
+  "expected": {
+    "verdict": "Wrong Answer",
+    "messageIncludes": "Short circuit"
+  },
+  "circuit": {
+    "parts": [
+      {
+        "id": "LED1",
+        "type": "LED",
+        "x": 290,
+        "y": 80
+      },
+      {
+        "id": "RES1",
+        "type": "RES",
+        "x": 460,
+        "y": 80
+      }
+    ],
+    "wires": [
+      [
+        "mcu.D3",
+        "RES1.1"
+      ],
+      [
+        "RES1.2",
+        "LED1.A"
+      ],
+      [
+        "LED1.K",
+        "mcu.GND"
+      ],
+      [
+        "mcu.D3",
+        "mcu.GND"
+      ]
+    ]
+  },
+  "code": "function setup(){ pinMode(3, OUTPUT); digitalWrite(3, HIGH); }\nfunction loop(){}\n"
+}

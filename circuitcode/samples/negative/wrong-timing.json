@@ -1,0 +1,40 @@
+{
+  "name": "wrong-timing",
+  "problem": "blink-1hz",
+  "description": "Blinks at 2 Hz instead of 1 Hz.",
+  "expected": {
+    "verdict": "Wrong Answer",
+    "messageIncludes": "Expected LED"
+  },
+  "circuit": {
+    "parts": [
+      {
+        "id": "LED1",
+        "type": "LED",
+        "x": 290,
+        "y": 80
+      },
+      {
+        "id": "RES1",
+        "type": "RES",
+        "x": 460,
+        "y": 80
+      }
+    ],
+    "wires": [
+      [
+        "mcu.D3",
+        "RES1.1"
+      ],
+      [
+        "RES1.2",
+        "LED1.A"
+      ],
+      [
+        "LED1.K",
+        "mcu.GND"
+      ]
+    ]
+  },
+  "code": "function setup(){ pinMode(3, OUTPUT); }\nfunction loop(){ digitalWrite(3, HIGH); delay(250); digitalWrite(3, LOW); delay(250); }\n"
+}

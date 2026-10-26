@@ -1,0 +1,79 @@
+{
+  "problem": "countdown",
+  "title": "Launch Countdown",
+  "difficulty": "Medium",
+  "expected": {
+    "verdict": "Accepted",
+    "used": 3,
+    "score": 100
+  },
+  "circuit": {
+    "parts": [
+      {
+        "id": "SEG1",
+        "type": "SEG",
+        "x": 290,
+        "y": 110
+      },
+      {
+        "id": "BTN1",
+        "type": "BTN",
+        "x": 460,
+        "y": 110
+      },
+      {
+        "id": "RES1",
+        "type": "RES",
+        "x": 640,
+        "y": 110
+      }
+    ],
+    "wires": [
+      [
+        "mcu.D3",
+        "SEG1.a"
+      ],
+      [
+        "mcu.D4",
+        "SEG1.b"
+      ],
+      [
+        "mcu.D5",
+        "SEG1.c"
+      ],
+      [
+        "mcu.D6",
+        "SEG1.d"
+      ],
+      [
+        "mcu.D7",
+        "SEG1.e"
+      ],
+      [
+        "mcu.D8",
+        "SEG1.f"
+      ],
+      [
+        "mcu.D9",
+        "SEG1.g"
+      ],
+      [
+        "SEG1.K",
+        "RES1.1"
+      ],
+      [
+        "RES1.2",
+        "mcu.GND"
+      ],
+      [
+        "BTN1.1",
+        "mcu.D2"
+      ],
+      [
+        "BTN1.2",
+        "mcu.GND"
+      ]
+    ]
+  },
+  "code": "var D = [0x3F,0x06,0x5B,0x4F,0x66,0x6D,0x7D,0x07,0x7F,0x6F];\nfunction show(n, base) { for (var i = 0; i < 7; i++) digitalWrite(base + i, n < 0 ? 0 : (D[n] >> i) & 1); }function setup(){pinMode(2,INPUT_PULLUP);for(var i=3;i<=9;i++)pinMode(i,OUTPUT);} function loop(){ if(digitalRead(2)===LOW){ for(var n=9;n>=0;n--){show(n,3);delay(400);} show(-1,3);} }"
+}

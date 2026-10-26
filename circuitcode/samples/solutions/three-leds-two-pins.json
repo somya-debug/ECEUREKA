@@ -1,0 +1,79 @@
+{
+  "problem": "three-leds-two-pins",
+  "title": "Three LEDs, Two Pins",
+  "difficulty": "Hard",
+  "expected": {
+    "verdict": "Accepted",
+    "used": 5,
+    "score": 100
+  },
+  "circuit": {
+    "parts": [
+      {
+        "id": "LED1",
+        "type": "LED",
+        "x": 290,
+        "y": 80
+      },
+      {
+        "id": "LED2",
+        "type": "LED",
+        "x": 460,
+        "y": 80
+      },
+      {
+        "id": "LED3",
+        "type": "LED",
+        "x": 640,
+        "y": 80
+      },
+      {
+        "id": "RES1",
+        "type": "RES",
+        "x": 290,
+        "y": 190
+      },
+      {
+        "id": "RES2",
+        "type": "RES",
+        "x": 460,
+        "y": 190
+      }
+    ],
+    "wires": [
+      [
+        "mcu.D2",
+        "RES1.1"
+      ],
+      [
+        "RES1.2",
+        "LED1.A"
+      ],
+      [
+        "LED1.K",
+        "mcu.GND"
+      ],
+      [
+        "mcu.5V",
+        "LED2.A"
+      ],
+      [
+        "LED2.K",
+        "RES1.2"
+      ],
+      [
+        "mcu.D3",
+        "RES2.1"
+      ],
+      [
+        "RES2.2",
+        "LED3.A"
+      ],
+      [
+        "LED3.K",
+        "mcu.GND"
+      ]
+    ]
+  },
+  "code": "var step = 0;\n\nfunction setup() {\n  pinMode(3, OUTPUT);\n}\n\nfunction loop() {\n  if (step === 0) { pinMode(2, OUTPUT); digitalWrite(2, HIGH); digitalWrite(3, LOW); }\n  if (step === 1) { digitalWrite(2, LOW); }\n  if (step === 2) { pinMode(2, INPUT); digitalWrite(3, HIGH); }\n  step = (step + 1) % 3;\n  delay(300);\n}\n"
+}

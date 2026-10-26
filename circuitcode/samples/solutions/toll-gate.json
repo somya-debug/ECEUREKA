@@ -1,0 +1,87 @@
+{
+  "problem": "toll-gate",
+  "title": "Toll Gate",
+  "difficulty": "Medium",
+  "expected": {
+    "verdict": "Accepted",
+    "used": 5,
+    "score": 100
+  },
+  "circuit": {
+    "parts": [
+      {
+        "id": "BTN1",
+        "type": "BTN",
+        "x": 290,
+        "y": 90
+      },
+      {
+        "id": "SRV1",
+        "type": "SRV",
+        "x": 460,
+        "y": 90
+      },
+      {
+        "id": "LED1",
+        "type": "LED",
+        "x": 640,
+        "y": 90
+      },
+      {
+        "id": "LED2",
+        "type": "LED",
+        "x": 290,
+        "y": 200
+      },
+      {
+        "id": "RES1",
+        "type": "RES",
+        "x": 460,
+        "y": 200
+      }
+    ],
+    "wires": [
+      [
+        "BTN1.1",
+        "mcu.D2"
+      ],
+      [
+        "BTN1.2",
+        "mcu.GND"
+      ],
+      [
+        "SRV1.V",
+        "mcu.5V"
+      ],
+      [
+        "SRV1.G",
+        "mcu.GND"
+      ],
+      [
+        "SRV1.S",
+        "mcu.D9"
+      ],
+      [
+        "mcu.D4",
+        "LED1.A"
+      ],
+      [
+        "mcu.D5",
+        "LED2.A"
+      ],
+      [
+        "LED1.K",
+        "RES1.1"
+      ],
+      [
+        "LED2.K",
+        "RES1.1"
+      ],
+      [
+        "RES1.2",
+        "mcu.GND"
+      ]
+    ]
+  },
+  "code": "var arm=new Servo(), lp=-10000; function setup(){pinMode(2,INPUT_PULLUP);pinMode(4,OUTPUT);pinMode(5,OUTPUT);arm.attach(9);} function loop(){ if(digitalRead(2)===LOW) lp=millis(); var o=millis()-lp<2000; arm.write(o?90:0); digitalWrite(4,!o); digitalWrite(5,o); delay(5);}"
+}

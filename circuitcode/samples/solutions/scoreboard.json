@@ -1,0 +1,141 @@
+{
+  "problem": "scoreboard",
+  "title": "Two-Digit Scoreboard",
+  "difficulty": "Nearly Impossible",
+  "expected": {
+    "verdict": "Accepted",
+    "used": 6,
+    "score": 100
+  },
+  "circuit": {
+    "parts": [
+      {
+        "id": "SEG1",
+        "type": "SEG",
+        "x": 290,
+        "y": 110
+      },
+      {
+        "id": "SEG2",
+        "type": "SEG",
+        "x": 460,
+        "y": 110
+      },
+      {
+        "id": "BTN1",
+        "type": "BTN",
+        "x": 640,
+        "y": 110
+      },
+      {
+        "id": "BTN2",
+        "type": "BTN",
+        "x": 290,
+        "y": 240
+      },
+      {
+        "id": "RES1",
+        "type": "RES",
+        "x": 460,
+        "y": 240
+      },
+      {
+        "id": "RES2",
+        "type": "RES",
+        "x": 640,
+        "y": 240
+      }
+    ],
+    "wires": [
+      [
+        "mcu.D3",
+        "SEG1.a"
+      ],
+      [
+        "mcu.D4",
+        "SEG1.b"
+      ],
+      [
+        "mcu.D5",
+        "SEG1.c"
+      ],
+      [
+        "mcu.D6",
+        "SEG1.d"
+      ],
+      [
+        "mcu.D7",
+        "SEG1.e"
+      ],
+      [
+        "mcu.D8",
+        "SEG1.f"
+      ],
+      [
+        "mcu.D9",
+        "SEG1.g"
+      ],
+      [
+        "SEG2.a",
+        "SEG1.a"
+      ],
+      [
+        "SEG2.b",
+        "SEG1.b"
+      ],
+      [
+        "SEG2.c",
+        "SEG1.c"
+      ],
+      [
+        "SEG2.d",
+        "SEG1.d"
+      ],
+      [
+        "SEG2.e",
+        "SEG1.e"
+      ],
+      [
+        "SEG2.f",
+        "SEG1.f"
+      ],
+      [
+        "SEG2.g",
+        "SEG1.g"
+      ],
+      [
+        "SEG1.K",
+        "RES1.1"
+      ],
+      [
+        "RES1.2",
+        "mcu.D10"
+      ],
+      [
+        "SEG2.K",
+        "RES2.1"
+      ],
+      [
+        "RES2.2",
+        "mcu.D11"
+      ],
+      [
+        "BTN1.1",
+        "mcu.D2"
+      ],
+      [
+        "BTN1.2",
+        "mcu.GND"
+      ],
+      [
+        "BTN2.1",
+        "mcu.D12"
+      ],
+      [
+        "BTN2.2",
+        "mcu.GND"
+      ]
+    ]
+  },
+  "code": "var D = [0x3F,0x06,0x5B,0x4F,0x66,0x6D,0x7D,0x07,0x7F,0x6F];\nfunction show(n, base) { for (var i = 0; i < 7; i++) digitalWrite(base + i, n < 0 ? 0 : (D[n] >> i) & 1); }var score=0, b=[{p:2,st:1,t:-99,f:function(){score=(score+1)%100;}},{p:12,st:1,t:-99,f:function(){score=0;}}];\nfunction setup(){for(var i=3;i<=11;i++)pinMode(i,OUTPUT);digitalWrite(10,1);digitalWrite(11,1);pinMode(2,INPUT_PULLUP);pinMode(12,INPUT_PULLUP);}\nfunction loop(){ var now=millis();\n  b.forEach(function(k){var r=digitalRead(k.p); if(r!==k.st && now-k.t>25){k.st=r;k.t=now;if(r===0)k.f();}});\n  digitalWrite(10,1);digitalWrite(11,1); show(Math.floor(score/10),3); digitalWrite(10,0); delay(1);\n  digitalWrite(10,1); show(score%10,3); digitalWrite(11,0); delay(1); }"
+}

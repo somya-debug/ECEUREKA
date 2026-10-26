@@ -1,0 +1,338 @@
+[
+  {
+    "id": "hello-led",
+    "title": "Hello, LED",
+    "difficulty": "Easy",
+    "ref": 2,
+    "limits": {
+      "LED": 1,
+      "RES": 1
+    },
+    "tests": 2,
+    "hiddenTests": 1,
+    "hints": 3
+  },
+  {
+    "id": "blink-1hz",
+    "title": "Blink at 1 Hz",
+    "difficulty": "Easy",
+    "ref": 2,
+    "limits": {
+      "LED": 1,
+      "RES": 1
+    },
+    "tests": 2,
+    "hiddenTests": 1,
+    "hints": 3
+  },
+  {
+    "id": "button-light",
+    "title": "Button Light",
+    "difficulty": "Easy",
+    "ref": 3,
+    "limits": {
+      "LED": 1,
+      "RES": 1,
+      "BTN": 1
+    },
+    "tests": 2,
+    "hiddenTests": 1,
+    "hints": 3
+  },
+  {
+    "id": "night-light",
+    "title": "Night Light",
+    "difficulty": "Easy",
+    "ref": 4,
+    "limits": {
+      "LDR": 1,
+      "RES": 2,
+      "LED": 1
+    },
+    "tests": 2,
+    "hiddenTests": 1,
+    "hints": 3
+  },
+  {
+    "id": "motion-lamp",
+    "title": "Motion Lamp",
+    "difficulty": "Easy",
+    "ref": 3,
+    "limits": {
+      "PIR": 1,
+      "LED": 1,
+      "RES": 1
+    },
+    "tests": 2,
+    "hiddenTests": 1,
+    "hints": 3
+  },
+  {
+    "id": "rgb-cycle",
+    "title": "Colour Wheel",
+    "difficulty": "Easy",
+    "ref": 2,
+    "limits": {
+      "RGB": 1,
+      "RES": 3
+    },
+    "tests": 2,
+    "hiddenTests": 1,
+    "hints": 3
+  },
+  {
+    "id": "two-key",
+    "title": "Two-Key Launch",
+    "difficulty": "Easy",
+    "ref": 4,
+    "limits": {
+      "BTN": 2,
+      "LED": 1,
+      "RES": 1
+    },
+    "tests": 2,
+    "hiddenTests": 1,
+    "hints": 2
+  },
+  {
+    "id": "alternate",
+    "title": "Alternating LEDs",
+    "difficulty": "Medium",
+    "ref": 3,
+    "limits": {
+      "LED": 2,
+      "RES": 2
+    },
+    "tests": 2,
+    "hiddenTests": 1,
+    "hints": 3
+  },
+  {
+    "id": "ping-pong",
+    "title": "Ping-Pong Chase",
+    "difficulty": "Medium",
+    "ref": 4,
+    "limits": {
+      "LED": 3,
+      "RES": 3
+    },
+    "tests": 2,
+    "hiddenTests": 1,
+    "hints": 3
+  },
+  {
+    "id": "binary-counter",
+    "title": "Binary Counter",
+    "difficulty": "Medium",
+    "ref": 4,
+    "limits": {
+      "LED": 2,
+      "RES": 2,
+      "BTN": 1
+    },
+    "tests": 3,
+    "hiddenTests": 2,
+    "hints": 3
+  },
+  {
+    "id": "doorbell",
+    "title": "Doorbell",
+    "difficulty": "Medium",
+    "ref": 3,
+    "limits": {
+      "BUZ": 1,
+      "RES": 1,
+      "BTN": 1
+    },
+    "tests": 3,
+    "hiddenTests": 2,
+    "hints": 3
+  },
+  {
+    "id": "dimmer",
+    "title": "Dimmer Switch",
+    "difficulty": "Medium",
+    "ref": 4,
+    "limits": {
+      "POT": 1,
+      "BTN": 1,
+      "LED": 1,
+      "RES": 1
+    },
+    "tests": 2,
+    "hiddenTests": 1,
+    "hints": 3
+  },
+  {
+    "id": "countdown",
+    "title": "Launch Countdown",
+    "difficulty": "Medium",
+    "ref": 3,
+    "limits": {
+      "SEG": 1,
+      "BTN": 1,
+      "RES": 8
+    },
+    "tests": 2,
+    "hiddenTests": 1,
+    "hints": 3
+  },
+  {
+    "id": "toll-gate",
+    "title": "Toll Gate",
+    "difficulty": "Medium",
+    "ref": 5,
+    "limits": {
+      "BTN": 1,
+      "SRV": 1,
+      "LED": 2,
+      "RES": 2
+    },
+    "tests": 2,
+    "hiddenTests": 1,
+    "hints": 3
+  },
+  {
+    "id": "light-meter",
+    "title": "Light Meter",
+    "difficulty": "Medium",
+    "ref": 4,
+    "limits": {
+      "LDR": 1,
+      "RES": 2,
+      "SEG": 1
+    },
+    "tests": 2,
+    "hiddenTests": 1,
+    "hints": 3
+  },
+  {
+    "id": "toggle-debounce",
+    "title": "Toggle with Debounce",
+    "difficulty": "Hard",
+    "ref": 3,
+    "limits": {
+      "LED": 1,
+      "RES": 1,
+      "BTN": 1
+    },
+    "tests": 3,
+    "hiddenTests": 2,
+    "hints": 3
+  },
+  {
+    "id": "three-leds-two-pins",
+    "title": "Three LEDs, Two Pins",
+    "difficulty": "Hard",
+    "ref": 5,
+    "limits": {
+      "LED": 3,
+      "RES": 3
+    },
+    "tests": 2,
+    "hiddenTests": 1,
+    "hints": 3
+  },
+  {
+    "id": "short-long",
+    "title": "Short Press, Long Press",
+    "difficulty": "Hard",
+    "ref": 4,
+    "limits": {
+      "LED": 2,
+      "RES": 2,
+      "BTN": 1
+    },
+    "tests": 3,
+    "hiddenTests": 2,
+    "hints": 3
+  },
+  {
+    "id": "porch-light",
+    "title": "Porch Light",
+    "difficulty": "Hard",
+    "ref": 5,
+    "limits": {
+      "PIR": 1,
+      "LDR": 1,
+      "LED": 1,
+      "RES": 2
+    },
+    "tests": 3,
+    "hiddenTests": 2,
+    "hints": 3
+  },
+  {
+    "id": "color-mixer",
+    "title": "Colour Mixer",
+    "difficulty": "Hard",
+    "ref": 4,
+    "limits": {
+      "POT": 1,
+      "BTN": 1,
+      "RGB": 1,
+      "RES": 3
+    },
+    "tests": 2,
+    "hiddenTests": 1,
+    "hints": 3
+  },
+  {
+    "id": "safe-lock",
+    "title": "Combination Safe",
+    "difficulty": "Hard",
+    "ref": 5,
+    "limits": {
+      "BTN": 2,
+      "SRV": 1,
+      "BUZ": 1,
+      "RES": 1
+    },
+    "tests": 3,
+    "hiddenTests": 2,
+    "hints": 3
+  },
+  {
+    "id": "bar-graph",
+    "title": "Shift-Register Bar Graph",
+    "difficulty": "Hard",
+    "ref": 11,
+    "limits": {
+      "SR": 1,
+      "LED": 8,
+      "RES": 8,
+      "POT": 1
+    },
+    "tests": 2,
+    "hiddenTests": 1,
+    "hints": 3
+  },
+  {
+    "id": "charlie-six",
+    "title": "Charlie's Six",
+    "difficulty": "Nearly Impossible",
+    "ref": 9,
+    "limits": {
+      "LED": 6,
+      "RES": 3,
+      "BTN": 1
+    },
+    "tests": 4,
+    "hiddenTests": 2,
+    "hints": 3
+  },
+  {
+    "id": "scoreboard",
+    "title": "Two-Digit Scoreboard",
+    "difficulty": "Nearly Impossible",
+    "ref": 6,
+    "limits": {
+      "SEG": 2,
+      "BTN": 2,
+      "RES": 9
+    },
+    "tests": 3,
+    "hiddenTests": 2,
+    "hints": 3
+  }
+]

@@ -1,0 +1,87 @@
+{
+  "problem": "safe-lock",
+  "title": "Combination Safe",
+  "difficulty": "Hard",
+  "expected": {
+    "verdict": "Accepted",
+    "used": 5,
+    "score": 100
+  },
+  "circuit": {
+    "parts": [
+      {
+        "id": "BTN1",
+        "type": "BTN",
+        "x": 290,
+        "y": 90
+      },
+      {
+        "id": "BTN2",
+        "type": "BTN",
+        "x": 460,
+        "y": 90
+      },
+      {
+        "id": "SRV1",
+        "type": "SRV",
+        "x": 640,
+        "y": 90
+      },
+      {
+        "id": "BUZ1",
+        "type": "BUZ",
+        "x": 290,
+        "y": 200
+      },
+      {
+        "id": "RES1",
+        "type": "RES",
+        "x": 460,
+        "y": 200
+      }
+    ],
+    "wires": [
+      [
+        "BTN1.1",
+        "mcu.D2"
+      ],
+      [
+        "BTN1.2",
+        "mcu.GND"
+      ],
+      [
+        "BTN2.1",
+        "mcu.D3"
+      ],
+      [
+        "BTN2.2",
+        "mcu.GND"
+      ],
+      [
+        "SRV1.V",
+        "mcu.5V"
+      ],
+      [
+        "SRV1.G",
+        "mcu.GND"
+      ],
+      [
+        "SRV1.S",
+        "mcu.D9"
+      ],
+      [
+        "mcu.D4",
+        "RES1.1"
+      ],
+      [
+        "RES1.2",
+        "BUZ1.A"
+      ],
+      [
+        "BUZ1.K",
+        "mcu.GND"
+      ]
+    ]
+  },
+  "code": "var bolt=new Servo(), entry='', keys=[{p:2,n:'A',st:1,t:-99},{p:3,n:'B',st:1,t:-99}];\nfunction setup(){pinMode(2,INPUT_PULLUP);pinMode(3,INPUT_PULLUP);pinMode(4,OUTPUT);bolt.attach(9);bolt.write(0);}\nfunction resync(){ keys.forEach(function(k){k.st=digitalRead(k.p);k.t=millis();}); }\nfunction loop(){ var now=millis();\n  keys.forEach(function(k){ var r=digitalRead(k.p); if(r!==k.st && now-k.t>25){ k.st=r; k.t=now; if(r===0) entry+=k.n; } });\n  if(entry.length===4){ if(entry==='AABA'){bolt.write(90);delay(3000);bolt.write(0);} else {digitalWrite(4,1);delay(500);digitalWrite(4,0);} entry=''; resync(); }\n  delay(2);}"
+}

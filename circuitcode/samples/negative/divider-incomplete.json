@@ -1,0 +1,50 @@
+{
+  "name": "divider-incomplete",
+  "problem": "night-light",
+  "description": "LDR with no resistor to GND: A0 floats.",
+  "expected": {
+    "verdict": "Wrong Answer",
+    "messageIncludes": "floating"
+  },
+  "circuit": {
+    "parts": [
+      {
+        "id": "LDR1",
+        "type": "LDR",
+        "x": 290,
+        "y": 80
+      },
+      {
+        "id": "LED1",
+        "type": "LED",
+        "x": 460,
+        "y": 80
+      },
+      {
+        "id": "RES2",
+        "type": "RES",
+        "x": 640,
+        "y": 80
+      }
+    ],
+    "wires": [
+      [
+        "mcu.5V",
+        "LDR1.1"
+      ],
+      [
+        "mcu.D4",
+        "RES2.1"
+      ],
+      [
+        "RES2.2",
+        "LED1.A"
+      ],
+      [
+        "LED1.K",
+        "mcu.GND"
+      ]
+    ]
+  },
+  "code": "function setup(){pinMode(4,OUTPUT);} function loop(){digitalWrite(4, analogRead(A0)<450?HIGH:LOW); delay(10);}"
+}

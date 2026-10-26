@@ -1,0 +1,50 @@
+{
+  "name": "too-many-parts",
+  "problem": "hello-led",
+  "description": "Uses two resistors where only one is provided.",
+  "expected": {
+    "verdict": "Invalid Circuit",
+    "messageIncludes": "Too many RES"
+  },
+  "circuit": {
+    "parts": [
+      {
+        "id": "LED1",
+        "type": "LED",
+        "x": 290,
+        "y": 80
+      },
+      {
+        "id": "RES1",
+        "type": "RES",
+        "x": 460,
+        "y": 80
+      },
+      {
+        "id": "RES2",
+        "type": "RES",
+        "x": 640,
+        "y": 80
+      }
+    ],
+    "wires": [
+      [
+        "mcu.D3",
+        "RES1.1"
+      ],
+      [
+        "RES1.2",
+        "RES2.1"
+      ],
+      [
+        "RES2.2",
+        "LED1.A"
+      ],
+      [
+        "LED1.K",
+        "mcu.GND"
+      ]
+    ]
+  },
+  "code": "function setup(){ pinMode(3, OUTPUT); digitalWrite(3, HIGH); }\nfunction loop(){}\n"
+}

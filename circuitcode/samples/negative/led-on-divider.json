@@ -1,0 +1,58 @@
+{
+  "name": "led-on-divider",
+  "problem": "night-light",
+  "description": "LED hung on the A0 divider node to save a resistor; the lit LED drags the reading.",
+  "expected": {
+    "verdict": "Wrong Answer",
+    "messageIncludes": "should be"
+  },
+  "circuit": {
+    "parts": [
+      {
+        "id": "LDR1",
+        "type": "LDR",
+        "x": 290,
+        "y": 80
+      },
+      {
+        "id": "RES1",
+        "type": "RES",
+        "x": 460,
+        "y": 80
+      },
+      {
+        "id": "LED1",
+        "type": "LED",
+        "x": 640,
+        "y": 80
+      }
+    ],
+    "wires": [
+      [
+        "mcu.5V",
+        "LDR1.1"
+      ],
+      [
+        "LDR1.2",
+        "mcu.A0"
+      ],
+      [
+        "mcu.A0",
+        "RES1.1"
+      ],
+      [
+        "RES1.2",
+        "mcu.GND"
+      ],
+      [
+        "mcu.D4",
+        "LED1.A"
+      ],
+      [
+        "LED1.K",
+        "mcu.A0"
+      ]
+    ]
+  },
+  "code": "function setup(){pinMode(4,OUTPUT);} function loop(){digitalWrite(4, analogRead(A0)<450?HIGH:LOW); delay(10);}"
+}

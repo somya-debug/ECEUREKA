@@ -1,0 +1,2731 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CircuitCode — practice hardware problems</title>
+<meta name="theme-color" content="#080D18">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23080D18'/%3E%3Cg transform='translate(16 16) scale(.82) translate(-16 -16)' fill='none' stroke='%2335D9FF' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='8' y='8' width='16' height='16' rx='2'/%3E%3Cpath d='M12 4v4M16 4v4M20 4v4M12 24v4M16 24v4M20 24v4M4 12h4M4 16h4M4 20h4M24 12h4M24 16h4M24 20h4'/%3E%3Cpath d='M13 17l2 2 4-5'/%3E%3C/g%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  /* Circuit Dark — core surfaces */
+  --bg: #080D18; --panel: #111C2E; --panel2: #17243A; --panel3: #1B2A40;
+  --line: #26354B; --line2: #33465F;
+  /* text */
+  --text: #E8F0FC; --muted: #A5B3C8; --faint: #75849B;
+  /* brand + semantic */
+  --accent: #35D9FF;      /* electric cyan: primary actions, focus, active */
+  --accent2: #9B87FF;     /* signal violet: XP, achievements, stars */
+  --good: #42D6A4; --bad: #FF6B78; --warn: #FFCB70; --info: #35D9FF;
+  --easy: #42D6A4; --medium: #FFCB70; --hard: #FF6B78;
+  --glow-c: 0 0 0 1px rgba(53,217,255,.35), 0 0 16px rgba(53,217,255,.22);
+  --glow-g: 0 0 12px rgba(66,214,164,.28);
+  --glow-v: 0 0 12px rgba(155,135,255,.28);
+  --shadow: 0 8px 24px rgba(0,0,0,.35);
+  --r-card: 16px; --r-ctl: 10px; --r-sm: 6px;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --head: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --body: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --t: 180ms;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; color: var(--text); font: 15px/1.6 var(--body); background-color: var(--bg); }
+body {
+  background-image:
+    radial-gradient(ellipse at 12% -10%, rgba(53,217,255,.08), transparent 50%),
+    radial-gradient(ellipse at 100% 25%, rgba(155,135,255,.07), transparent 45%),
+    linear-gradient(rgba(165,179,200,.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(165,179,200,.035) 1px, transparent 1px);
+  background-size: auto, auto, 32px 32px, 32px 32px;
+  background-attachment: fixed;
+  min-height: 100vh;
+}
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+code { font-family: var(--mono); background: rgba(53,217,255,.08); color: #9BE8FF; padding: 1px 6px; border-radius: 5px; font-size: .88em; border: 1px solid rgba(53,217,255,.18); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+::selection { background: rgba(53,217,255,.3); }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--line2); border-radius: 6px; }
+
+/* top bar: floating glass toolbar (the one place glass is used) */
+.top { display: flex; align-items: center; gap: 14px; padding: 10px 24px; border-bottom: 1px solid var(--line); background: rgba(17,28,46,.82); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 5; flex-wrap: wrap; box-shadow: 0 8px 28px rgba(0,0,0,.35); }
+.top::after { content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 1px; background: linear-gradient(90deg, transparent, rgba(53,217,255,.55), transparent); opacity: .6; }
+.brand { color: var(--text); font: 700 19px var(--head); letter-spacing: .2px; display: flex; align-items: center; gap: 10px; }
+.brand:hover { text-decoration: none; }
+.brand b { color: var(--accent); font-weight: 700; }
+.logo { display: inline-flex; color: var(--accent); }
+.logo svg { width: 26px; height: 26px; }
+.tag { color: var(--faint); font: 11px var(--mono); letter-spacing: .3px; padding: 3px 10px; border: 1px solid var(--line); border-radius: 999px; }
+.tag::before { content: "● "; color: var(--good); animation: blink 2s infinite; }
+@keyframes blink { 50% { opacity: .35; } }
+.top .grow { flex: 1; }
+.top nav a { color: var(--muted); font: 500 13.5px var(--head); margin-left: 4px; padding: 7px 13px; border-radius: var(--r-ctl); border: 1px solid transparent; transition: all var(--t); }
+.top nav a:hover { color: var(--text); text-decoration: none; background: var(--panel2); }
+.top nav a.active { color: var(--accent); border-color: rgba(53,217,255,.4); background: rgba(53,217,255,.09); }
+main { max-width: 1280px; margin: 0 auto; padding: 28px 24px; }
+
+h1 { font: 700 32px/1.2 var(--head); letter-spacing: -.3px; margin: 0 0 6px; }
+h1::before { content: "// "; color: var(--accent); font-family: var(--mono); font-weight: 500; }
+h2 { font: 600 13px var(--head); letter-spacing: 1px; text-transform: uppercase; margin: 0 0 12px; color: var(--muted); }
+.sub { color: var(--muted); margin: 0 0 20px; }
+
+.chip { display: inline-block; font: 600 11px var(--mono); letter-spacing: .5px; padding: 2px 10px; border-radius: 6px; border: 1px solid currentColor; background: color-mix(in srgb, currentColor 10%, transparent); }
+.chip.Easy { color: var(--easy); } .chip.Medium { color: var(--medium); } .chip.Hard { color: var(--hard); }
+
+.banner { background: linear-gradient(135deg, rgba(53,217,255,.07), rgba(155,135,255,.05)); border: 1px solid var(--line2); border-radius: var(--r-card); padding: 20px 22px; margin-bottom: 22px; position: relative; box-shadow: var(--shadow); }
+.banner::before, .card::before { content: ""; position: absolute; top: -1px; left: -1px; width: 16px; height: 16px; border-top: 2px solid var(--accent); border-left: 2px solid var(--accent); border-radius: var(--r-card) 0 0 0; pointer-events: none; opacity: .8; }
+.banner h2 { font-size: 18px; text-transform: none; letter-spacing: 0; color: var(--text); margin-bottom: 4px; }
+.banner .x { position: absolute; top: 10px; right: 12px; padding: 2px 9px; background: transparent; border: 0; color: var(--muted); font-size: 18px; }
+.steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 16px; }
+@media (max-width: 800px) { .steps { grid-template-columns: 1fr; } }
+.step { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; }
+.step .n { display: inline-flex; width: 26px; height: 26px; border-radius: 8px; background: var(--accent); color: #04121A; font: 700 14px var(--mono); align-items: center; justify-content: center; margin-right: 10px; }
+.step b { font: 600 15px var(--head); }
+.step p { margin: 8px 0 0; color: var(--muted); font-size: 13.5px; }
+
+.toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 14px; }
+.toolbar .grow { flex: 1; }
+.fchip { border-radius: 8px; padding: 5px 16px; font: 500 13px var(--head); }
+.fchip.on { background: rgba(53,217,255,.12); border-color: var(--accent); color: var(--accent); }
+.progress { height: 10px; background: var(--panel); border-radius: 6px; overflow: hidden; margin: 0 0 20px; border: 1px solid var(--line); padding: 2px; }
+.progress i { display: block; height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width .4s; }
+
+.tablewrap { overflow-x: auto; border-radius: var(--r-card); }
+.list { width: 100%; border-collapse: collapse; background: rgba(17,28,46,.92); border: 1px solid var(--line); border-radius: var(--r-card); overflow: hidden; }
+.list th, .list td { text-align: left; padding: 13px 16px; border-bottom: 1px solid var(--line); }
+.list th { color: var(--faint); font: 600 11px var(--head); text-transform: uppercase; letter-spacing: 1px; background: var(--panel2); }
+.list tr:last-child td { border-bottom: 0; }
+.list tbody tr { cursor: pointer; transition: background var(--t), box-shadow var(--t); }
+.list tbody tr:hover { background: rgba(53,217,255,.06); box-shadow: inset 3px 0 0 var(--accent); }
+.list td:first-child { font-family: var(--mono); color: var(--faint); }
+.list td a { color: var(--text); font-weight: 600; }
+.stars { color: var(--accent2); letter-spacing: 2px; white-space: nowrap; }
+.stars .off { color: #2A3A52; }
+.solved { color: var(--good); }
+
+.problem { display: grid; grid-template-columns: 380px 1fr; gap: 20px; align-items: start; }
+@media (max-width: 1000px) { .problem { grid-template-columns: 1fr; } }
+.card { background: rgba(17,28,46,.96); border: 1px solid var(--line); border-radius: var(--r-card); padding: 18px 20px; position: relative; box-shadow: var(--shadow); }
+.card + .card { margin-top: 16px; }
+.card p { margin: 0 0 10px; }
+.parts-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+.parts-list span { background: var(--panel2); border: 1px solid var(--line2); padding: 3px 10px; border-radius: 6px; font: 12px var(--mono); color: var(--accent); }
+.subs { width: 100%; border-collapse: collapse; font: 12.5px var(--mono); }
+.subs td { padding: 6px 4px; border-top: 1px solid var(--line); }
+.v-ok { color: var(--good); font-weight: 600; } .v-bad { color: var(--bad); font-weight: 600; }
+.hints ol { margin: 0 0 10px; padding-left: 20px; }
+.hints li { margin-bottom: 6px; }
+
+.bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 10px; }
+.bar .grow { flex: 1; }
+button { font: 500 13px var(--head); cursor: pointer; border: 1px solid var(--line2); background: var(--panel2); color: var(--text); padding: 7px 14px; border-radius: var(--r-ctl); transition: all var(--t); }
+button:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); background: var(--panel3); }
+button:disabled { opacity: .4; cursor: not-allowed; }
+button.primary { background: var(--accent); color: #04121A; border-color: var(--accent); font-weight: 600; }
+button.primary:hover:not(:disabled) { color: #04121A; background: #5CE3FF; box-shadow: var(--glow-c); }
+button.green { background: transparent; color: var(--good); border-color: var(--good); font-weight: 600; }
+button.green:hover:not(:disabled) { color: #04140E; background: var(--good); border-color: var(--good); box-shadow: var(--glow-g); }
+button.danger { color: var(--bad); }
+button.danger:hover:not(:disabled) { border-color: var(--bad); color: var(--bad); box-shadow: 0 0 12px rgba(255,107,120,.3); }
+.count { color: var(--faint); font: 11px var(--mono); margin-left: 4px; }
+.kbd { font: 11px var(--mono); border: 1px solid var(--line2); border-bottom-width: 2px; border-radius: 5px; padding: 0 5px; color: var(--muted); background: var(--panel2); }
+
+svg.board { width: 100%; height: auto; border: 1px solid var(--line); border-radius: 14px; touch-action: none; user-select: none; display: block;
+  background-color: #0A1424;
+  background-image: radial-gradient(rgba(165,179,200,.22) 1px, transparent 1.4px), linear-gradient(rgba(53,217,255,.035) 1px, transparent 1px), linear-gradient(90deg, rgba(53,217,255,.035) 1px, transparent 1px);
+  background-size: 20px 20px, 20px 20px, 20px 20px;
+  box-shadow: inset 0 0 50px rgba(0,0,0,.45); }
+.board .mcu { fill: #0F1E33; stroke: var(--accent); stroke-width: 2; filter: drop-shadow(0 0 8px rgba(53,217,255,.22)); }
+.board .mcu-title { fill: var(--accent); font: 700 12px var(--mono); letter-spacing: 1px; }
+.board .pinlbl { fill: var(--text); font: 11px var(--mono); }
+.board .plbl { fill: var(--muted); font: 10px var(--mono); }
+.board .pin { cursor: crosshair; }
+.board .pin circle.dot { fill: #C8D4E8; stroke: #0A1424; stroke-width: 2; transition: all .12s; }
+.board .pin circle.pinhit { fill: transparent; stroke: none; }
+.board .pin:hover circle.dot { fill: var(--accent); filter: drop-shadow(0 0 6px var(--accent)); }
+.board .pin.pending circle.dot { fill: var(--accent); stroke: #fff; filter: drop-shadow(0 0 8px var(--accent)); }
+.board .pin.target circle.dot { stroke: var(--accent); }
+.board .part .body { stroke: #DCE6F7; stroke-width: 2; fill: none; }
+.board .part.sel .hit { fill: rgba(53,217,255,.09); stroke: var(--accent); stroke-dasharray: 4 3; }
+.board .part .hit { fill: transparent; cursor: grab; }
+.board .part .name { fill: var(--accent2); font: 11px var(--mono); text-anchor: middle; }
+.board .wire { fill: none; stroke-width: 3; stroke-linecap: round; opacity: .95; filter: drop-shadow(0 0 3px currentColor); }
+.board .wire-hit { fill: none; stroke: transparent; stroke-width: 14; cursor: pointer; }
+.board g.w:hover .wire { stroke-width: 5; opacity: 1; }
+.board g.w.sel .wire { stroke-width: 6; stroke-dasharray: 2 7; }
+.board .preview { fill: none; stroke: var(--accent); stroke-width: 2; stroke-dasharray: 5 4; pointer-events: none; }
+.hint { color: var(--faint); font-size: 12px; margin-top: 6px; }
+
+.status { margin-top: 10px; padding: 10px 14px; border-radius: 10px; background: var(--panel2); border: 1px solid var(--line); border-left: 3px solid var(--faint); font: 12.5px/1.5 var(--mono); }
+.status.info { border-left-color: var(--info); }
+.status.warn { border-left-color: var(--warn); color: #FFE0A8; }
+.status.ok { border-left-color: var(--good); color: #9BEBCF; }
+
+details.ref { margin-top: 10px; font-size: 13px; color: var(--muted); }
+details.ref summary { cursor: pointer; color: var(--accent); font-family: var(--mono); font-size: 12px; }
+details.ref table { margin-top: 8px; border-collapse: collapse; width: 100%; }
+details.ref td { padding: 5px 8px; border-top: 1px solid var(--line); vertical-align: top; }
+details.ref td:first-child { white-space: nowrap; }
+
+textarea.code { width: 100%; height: 280px; resize: vertical; background: #0B1322; color: #D5E3FA; border: 1px solid var(--line); border-radius: 12px; padding: 14px; font: 14px/1.65 var(--mono); tab-size: 2; outline: none; caret-color: var(--accent); box-shadow: inset 0 0 24px rgba(0,0,0,.4); transition: border-color var(--t), box-shadow var(--t); }
+textarea.code:focus { border-color: var(--accent); box-shadow: inset 0 0 24px rgba(0,0,0,.4), 0 0 0 3px rgba(53,217,255,.15); }
+
+.verdict { font: 700 26px var(--head); letter-spacing: -.2px; margin: 0 0 4px; }
+.verdict.ok { color: var(--good); } .verdict.bad { color: var(--bad); }
+.explain { color: var(--muted); margin: 0 0 8px; }
+.stats { display: flex; flex-wrap: wrap; gap: 26px; margin: 10px 0 16px; }
+.stat b { display: block; font: 700 24px var(--mono); color: var(--accent); }
+.stat span { color: var(--faint); font: 600 10.5px var(--head); text-transform: uppercase; letter-spacing: 1px; }
+.tests { list-style: none; margin: 0; padding: 0; }
+.tests li { padding: 9px 0; border-top: 1px solid var(--line); }
+.tests .ok { color: var(--good); } .tests .no { color: var(--bad); }
+.tests small { display: block; color: var(--muted); margin-left: 22px; font-family: var(--mono); font-size: 12px; }
+.warn { color: var(--warn); font-size: 13px; }
+.tline { width: 100%; height: auto; margin: 6px 0 2px 22px; max-width: calc(100% - 22px); }
+.tline text { fill: var(--muted); font: 10px var(--mono); }
+.tline .on { fill: var(--warn); } .tline .inp { fill: var(--accent); } .tline .srv { fill: var(--accent2); }
+.board .pinlbl.pwm { fill: var(--accent); }
+.tline .track { fill: #0B1322; stroke: var(--line); stroke-width: .5; }
+
+.timer { display: inline-flex; align-items: center; gap: 8px; margin-left: 10px; padding: 2px 6px 2px 10px; border: 1px solid var(--line); border-radius: 10px; background: #0B1322; font: 13px var(--mono); vertical-align: middle; }
+.timer b { font-weight: 700; color: var(--muted); letter-spacing: 1px; }
+.timer.live b { color: var(--accent); }
+.tbtn { padding: 1px 9px; font-size: 11px; border-radius: 6px; }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 16px 0; }
+.cardstat { background: var(--panel2); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; border-top: 2px solid var(--accent); }
+.cardstat b { display: block; font: 700 24px var(--mono); color: var(--text); }
+.cardstat span { color: var(--faint); font: 600 10.5px var(--head); text-transform: uppercase; letter-spacing: 1px; }
+.chip.Solved { color: var(--good); } .chip.Progress { color: var(--warn); } .chip.New { color: var(--faint); }
+.list.static tbody tr { cursor: default; }
+.list tr.me { background: rgba(155,135,255,.09); box-shadow: inset 3px 0 0 var(--accent2); }
+.rankcell { font: 700 15px var(--mono); width: 70px; white-space: nowrap; }
+.player { display: flex; align-items: center; gap: 10px; }
+.activity { list-style: none; margin: 8px 0 0; padding: 0; font-size: 13.5px; }
+.activity li { padding: 7px 0; border-top: 1px solid var(--line); display: flex; gap: 10px; flex-wrap: wrap; }
+.activity .when { color: var(--faint); margin-left: auto; font-family: var(--mono); font-size: 12px; }
+
+.profilebtn { display: flex; align-items: center; gap: 8px; margin-left: 10px; padding: 3px 12px 3px 4px; border-radius: 999px; background: var(--panel2); }
+.profilebtn .uname { font: 500 13px var(--head); max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.avatar, .avatar-fb { border-radius: 50%; display: inline-flex; flex: none; object-fit: cover; }
+.avatar-fb { background: var(--accent2); color: #120C33; font-weight: 700; align-items: center; justify-content: center; }
+.overlay { position: fixed; inset: 0; background: rgba(5,9,18,.72); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center; z-index: 20; padding: 16px; }
+.modal { background: rgba(23,36,58,.94); border: 1px solid var(--line2); border-radius: var(--r-card); padding: 22px; width: 100%; max-width: 380px; box-shadow: 0 20px 60px rgba(0,0,0,.5); }
+.modal h2 { font-size: 15px; color: var(--text); }
+.modal label { display: block; font: 600 11px var(--head); letter-spacing: 1px; text-transform: uppercase; color: var(--muted); margin: 14px 0 4px; }
+.modal input[type=text] { width: 100%; padding: 9px 11px; border-radius: var(--r-ctl); border: 1px solid var(--line2); background: #0B1322; color: var(--text); font: 14px var(--mono); }
+.modal input[type=text]:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px rgba(53,217,255,.15); }
+.modal .pickrow { display: flex; align-items: center; gap: 14px; margin-top: 4px; }
+.modal .btns { display: flex; gap: 8px; justify-content: flex-end; margin-top: 18px; }
+@media (max-width: 600px) { .top .tag { display: none; } .profilebtn .uname { max-width: 80px; } }
+
+.guide h2 { margin-top: 24px; font-size: 14px; }
+.guide ul { margin: 6px 0 10px; padding-left: 20px; }
+.guide li { margin-bottom: 4px; }
+
+.bgchip { position: fixed; top: 64px; right: -70px; width: min(560px, 46vw); color: var(--accent); opacity: .05; z-index: 0; pointer-events: none; transform: rotate(6deg); transform-origin: top right; }
+.bgchip svg { width: 100%; height: auto; display: block; }
+main, header.top { position: relative; z-index: 1; }
+header.top { position: sticky; }
+@media (max-width: 700px) { .bgchip { opacity: .035; right: -140px; } }
+@media print { .bgchip { display: none; } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+
+.chip.NearlyImpossible { color: var(--accent2); box-shadow: var(--glow-v); }
+.chip.NearlyImpossible::before { content: "☠ "; }
+</style>
+</head>
+<body>
+<div class="bgchip" aria-hidden="true"><svg viewBox="0 0 520 780" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="60" y="70" width="400" height="690" rx="26"/><circle cx="92" cy="102" r="9"/><circle cx="92" cy="102" r="3"/><circle cx="428" cy="102" r="9"/><circle cx="428" cy="102" r="3"/><circle cx="92" cy="728" r="9"/><circle cx="92" cy="728" r="3"/><circle cx="428" cy="728" r="9"/><circle cx="428" cy="728" r="3"/><rect x="190" y="8" width="140" height="104" rx="6"/><rect x="206" y="24" width="108" height="64" rx="3"/><line x1="206" y1="56" x2="314" y2="56"/><rect x="76" y="164" width="12" height="12" rx="2"/><rect x="432" y="164" width="12" height="12" rx="2"/><rect x="76" y="188" width="12" height="12" rx="2"/><rect x="432" y="188" width="12" height="12" rx="2"/><rect x="76" y="212" width="12" height="12" rx="2"/><rect x="432" y="212" width="12" height="12" rx="2"/><rect x="76" y="236" width="12" height="12" rx="2"/><rect x="432" y="236" width="12" height="12" rx="2"/><rect x="76" y="260" width="12" height="12" rx="2"/><rect x="432" y="260" width="12" height="12" rx="2"/><rect x="76" y="284" width="12" height="12" rx="2"/><rect x="432" y="284" width="12" height="12" rx="2"/><rect x="76" y="308" width="12" height="12" rx="2"/><rect x="432" y="308" width="12" height="12" rx="2"/><rect x="76" y="332" width="12" height="12" rx="2"/><rect x="432" y="332" width="12" height="12" rx="2"/><rect x="76" y="356" width="12" height="12" rx="2"/><rect x="432" y="356" width="12" height="12" rx="2"/><rect x="76" y="380" width="12" height="12" rx="2"/><rect x="432" y="380" width="12" height="12" rx="2"/><rect x="76" y="404" width="12" height="12" rx="2"/><rect x="432" y="404" width="12" height="12" rx="2"/><rect x="76" y="428" width="12" height="12" rx="2"/><rect x="432" y="428" width="12" height="12" rx="2"/><rect x="76" y="452" width="12" height="12" rx="2"/><rect x="432" y="452" width="12" height="12" rx="2"/><rect x="76" y="476" width="12" height="12" rx="2"/><rect x="432" y="476" width="12" height="12" rx="2"/><rect x="76" y="500" width="12" height="12" rx="2"/><rect x="432" y="500" width="12" height="12" rx="2"/><rect x="76" y="524" width="12" height="12" rx="2"/><rect x="432" y="524" width="12" height="12" rx="2"/><rect x="76" y="548" width="12" height="12" rx="2"/><rect x="432" y="548" width="12" height="12" rx="2"/><rect x="76" y="572" width="12" height="12" rx="2"/><rect x="432" y="572" width="12" height="12" rx="2"/><rect x="76" y="596" width="12" height="12" rx="2"/><rect x="432" y="596" width="12" height="12" rx="2"/><rect x="76" y="620" width="12" height="12" rx="2"/><rect x="432" y="620" width="12" height="12" rx="2"/><rect x="76" y="644" width="12" height="12" rx="2"/><rect x="432" y="644" width="12" height="12" rx="2"/><rect x="76" y="668" width="12" height="12" rx="2"/><rect x="432" y="668" width="12" height="12" rx="2"/><rect x="76" y="692" width="12" height="12" rx="2"/><rect x="432" y="692" width="12" height="12" rx="2"/><rect x="170" y="330" width="180" height="180" rx="8"/><circle cx="192" cy="352" r="6"/><text x="260.0" y="426.0" text-anchor="middle" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="22" stroke="none" fill="currentColor">MCU</text><line x1="184.0" y1="330" x2="184.0" y2="316"/><line x1="184.0" y1="510" x2="184.0" y2="524"/><line x1="170" y1="344.0" x2="156" y2="344.0"/><line x1="350" y1="344.0" x2="364" y2="344.0"/><line x1="197.8181818181818" y1="330" x2="197.8181818181818" y2="316"/><line x1="197.8181818181818" y1="510" x2="197.8181818181818" y2="524"/><line x1="170" y1="357.8181818181818" x2="156" y2="357.8181818181818"/><line x1="350" y1="357.8181818181818" x2="364" y2="357.8181818181818"/><line x1="211.63636363636363" y1="330" x2="211.63636363636363" y2="316"/><line x1="211.63636363636363" y1="510" x2="211.63636363636363" y2="524"/><line x1="170" y1="371.6363636363636" x2="156" y2="371.6363636363636"/><line x1="350" y1="371.6363636363636" x2="364" y2="371.6363636363636"/><line x1="225.45454545454544" y1="330" x2="225.45454545454544" y2="316"/><line x1="225.45454545454544" y1="510" x2="225.45454545454544" y2="524"/><line x1="170" y1="385.45454545454544" x2="156" y2="385.45454545454544"/><line x1="350" y1="385.45454545454544" x2="364" y2="385.45454545454544"/><line x1="239.27272727272728" y1="330" x2="239.27272727272728" y2="316"/><line x1="239.27272727272728" y1="510" x2="239.27272727272728" y2="524"/><line x1="170" y1="399.27272727272725" x2="156" y2="399.27272727272725"/><line x1="350" y1="399.27272727272725" x2="364" y2="399.27272727272725"/><line x1="253.0909090909091" y1="330" x2="253.0909090909091" y2="316"/><line x1="253.0909090909091" y1="510" x2="253.0909090909091" y2="524"/><line x1="170" y1="413.0909090909091" x2="156" y2="413.0909090909091"/><line x1="350" y1="413.0909090909091" x2="364" y2="413.0909090909091"/><line x1="266.9090909090909" y1="330" x2="266.9090909090909" y2="316"/><line x1="266.9090909090909" y1="510" x2="266.9090909090909" y2="524"/><line x1="170" y1="426.9090909090909" x2="156" y2="426.9090909090909"/><line x1="350" y1="426.9090909090909" x2="364" y2="426.9090909090909"/><line x1="280.72727272727275" y1="330" x2="280.72727272727275" y2="316"/><line x1="280.72727272727275" y1="510" x2="280.72727272727275" y2="524"/><line x1="170" y1="440.72727272727275" x2="156" y2="440.72727272727275"/><line x1="350" y1="440.72727272727275" x2="364" y2="440.72727272727275"/><line x1="294.54545454545456" y1="330" x2="294.54545454545456" y2="316"/><line x1="294.54545454545456" y1="510" x2="294.54545454545456" y2="524"/><line x1="170" y1="454.54545454545456" x2="156" y2="454.54545454545456"/><line x1="350" y1="454.54545454545456" x2="364" y2="454.54545454545456"/><line x1="308.3636363636364" y1="330" x2="308.3636363636364" y2="316"/><line x1="308.3636363636364" y1="510" x2="308.3636363636364" y2="524"/><line x1="170" y1="468.3636363636364" x2="156" y2="468.3636363636364"/><line x1="350" y1="468.3636363636364" x2="364" y2="468.3636363636364"/><line x1="322.1818181818182" y1="330" x2="322.1818181818182" y2="316"/><line x1="322.1818181818182" y1="510" x2="322.1818181818182" y2="524"/><line x1="170" y1="482.1818181818182" x2="156" y2="482.1818181818182"/><line x1="350" y1="482.1818181818182" x2="364" y2="482.1818181818182"/><line x1="336.0" y1="330" x2="336.0" y2="316"/><line x1="336.0" y1="510" x2="336.0" y2="524"/><line x1="170" y1="496.0" x2="156" y2="496.0"/><line x1="350" y1="496.0" x2="364" y2="496.0"/><polyline points="156,357.8181818181818 120,357.8181818181818 120,218 88,218"/><polyline points="364,371.6363636363636 400,371.6363636363636 400,242 432,242"/><polyline points="156,385.45454545454544 113,385.45454545454544 113,290 88,290"/><polyline points="364,399.27272727272725 407,399.27272727272725 407,314 432,314"/><polyline points="156,413.0909090909091 106,413.0909090909091 106,362 88,362"/><polyline points="364,426.9090909090909 414,426.9090909090909 414,386 432,386"/><polyline points="156,440.72727272727275 99,440.72727272727275 99,434 88,434"/><polyline points="364,454.54545454545456 421,454.54545454545456 421,458 432,458"/><polyline points="156,468.3636363636364 92,468.3636363636364 92,506 88,506"/><polyline points="364,482.1818181818182 428,482.1818181818182 428,530 432,530"/><polyline points="230,316 230,150 250,150 250,112"/><polyline points="270,316 270,150 290,150 290,112"/><polyline points="210,524 210,590"/><polyline points="310,524 310,590"/><rect x="200" y="590" width="120" height="44" rx="22"/><text x="260" y="618" text-anchor="middle" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="14" stroke="none" fill="currentColor">16.000</text><rect x="150" y="660" width="22" height="12" rx="2"/><line x1="161" y1="660" x2="161" y2="640"/><rect x="350" y="660" width="22" height="12" rx="2"/><line x1="361" y1="660" x2="361" y2="640"/><rect x="206" y="680" width="48" height="14" rx="2"/><rect x="266" y="680" width="48" height="14" rx="2"/><circle cx="200" cy="720" r="7"/><circle cx="260" cy="720" r="7"/><circle cx="320" cy="720" r="7"/><polyline points="235,150 235,160 105,160"/></svg></div>
+<header class="top">
+  <a class="brand" href="#/"><span class="logo"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="8" width="16" height="16" rx="2"/><path d="M12 4v4M16 4v4M20 4v4M12 24v4M16 24v4M20 24v4M4 12h4M4 16h4M4 20h4M24 12h4M24 16h4M24 20h4"/><path d="M13 17l2 2 4-5" /></svg></span>Circuit<b>Code</b></a>
+  <span class="tag">SIM ONLINE · judge runs in your browser</span>
+  <span class="grow"></span>
+  <nav><a href="#/">Problems</a><a href="#/progress">My Progress</a><a href="#/leaderboard">Leaderboard</a><a href="#/help">How it works</a></nav>
+  <button id="profilebtn" class="profilebtn" aria-label="Edit profile"></button>
+</header>
+<main id="app"></main>
+
+<script>
+'use strict';
+/*
+ * judge.js — deterministic hardware judge (prototype)
+ *
+ * Pipeline:  circuit (netlist) + firmware (JS with Arduino API) + hidden tests  ->  verdict + score
+ *
+ * Circuit model (digital level):
+ *   - wires merge pins into nets (union-find)
+ *   - resistors, potentiometers, photoresistors and pressed buttons are edges between nets
+ *   - 5V, driven-HIGH pins (incl. PWM), powered sensor/chip outputs that are HIGH are "H" sources;
+ *     GND, driven-LOW pins and powered outputs that are LOW are "L" sources
+ *   - an LED / buzzer / RGB channel / display segment is ON when its anode is reachable from H
+ *     and its cathode from L; it BURNS if both sides are reachable with no resistor in the path
+ *   - H and L meeting through zero resistance is a SHORT
+ *
+ * Analog model (analogRead, and digitalRead of a resistor divider):
+ *   - every fixed resistor is 10 kΩ, a potentiometer is 10 kΩ end to end, a photoresistor goes
+ *     from ~1 kΩ (bright) to ~100 kΩ (dark), INPUT_PULLUP is 35 kΩ to 5V, LEDs are ignored
+ *   - node voltages are found with a small nodal-analysis solve
+ *
+ * Test inputs:
+ *   input   : button timeline used by every button without its own (back-compatible)
+ *   inputs  : { BTN2: spec, PIR1: spec, ... } per-part timelines (PIR: windows of motion)
+ *   analog  : { POT1: [[t, 0..1], ...], LDR1: [[t, 0..1 light level], ...] } step functions
+ *
+ * This file runs in the browser (inside a Web Worker built from toString()) and in Node (tests).
+ * Keep judge() and pressedAt() self-contained: they are stringified into the worker.
+ */
+
+// ---- input model: when is a button pressed at time t (ms)? ---------------------------------
+// spec = { windows: [[start,end], ...], bounce: ms, seg: ms }   (bounce = contact chatter length)
+function pressedAt(spec, t) {
+  if (!spec) return false;
+  var windows = spec.windows || [], bounce = spec.bounce || 0, seg = spec.seg || 2;
+  for (var i = 0; i < windows.length; i++) {
+    var s = windows[i][0], e = windows[i][1];
+    if (t >= s && t < e + bounce) {
+      if (t < s + bounce) return Math.floor((t - s) / seg) % 2 === 0;   // press chatter
+      if (t < e) return true;                                          // steady press
+      return Math.floor((t - e) / seg) % 2 === 0;                      // release chatter
+    }
+  }
+  return false;
+}
+
+function scoreFor(used, ref) {
+  if (used <= 0) return 0;
+  return Math.min(100, Math.round((ref / used) * 100));
+}
+function ratingFor(score) { return score >= 100 ? 3 : score >= 70 ? 2 : 1; }
+
+// ---- the judge ------------------------------------------------------------------------------
+function judge(job) {
+  var circuit = job.circuit || { parts: [], wires: [] };
+  var code = job.code || '';
+  var tests = job.tests || [];
+  var limits = job.limits || {};
+  var parts = circuit.parts || [], wires = circuit.wires || [];
+
+  var res = { verdict: 'Accepted', issues: [], warnings: [], tests: [], used: parts.length };
+
+  // 1. component limits -----------------------------------------------------------------------
+  var counts = {};
+  parts.forEach(function (p) { counts[p.type] = (counts[p.type] || 0) + 1; });
+  Object.keys(counts).forEach(function (type) {
+    var allowed = limits[type] || 0;
+    if (counts[type] > allowed) {
+      res.verdict = 'Invalid Circuit';
+      res.issues.push('Too many ' + type + ': ' + counts[type] + ' used, ' + allowed + ' allowed');
+    }
+  });
+  if (res.verdict !== 'Accepted') return res;
+
+  // 2. netlist --------------------------------------------------------------------------------
+  var parent = {};
+  function find(k) {
+    if (parent[k] === undefined) parent[k] = k;
+    while (parent[k] !== k) { parent[k] = parent[parent[k]]; k = parent[k]; }
+    return k;
+  }
+  wires.forEach(function (w) { parent[find(w[0])] = find(w[1]); });
+
+  var PINS = {
+    LED: ['A', 'K'], BUZ: ['A', 'K'], RES: ['1', '2'], BTN: ['1', '2'],
+    RGB: ['R', 'G', 'B', 'K'], SEG: ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'K'],
+    POT: ['1', 'W', '2'], LDR: ['1', '2'], PIR: ['V', 'O', 'G'], SRV: ['S', 'V', 'G'],
+    SR: ['DS', 'SH', 'ST', 'VCC', 'GND', 'Q0', 'Q1', 'Q2', 'Q3', 'Q4', 'Q5', 'Q6', 'Q7']
+  };
+  var OPTIONAL = { RGB: 'RGB', SEG: 'abcdefg', SR: 'Q' };
+  var wired = {};
+  wires.forEach(function (w) { wired[w[0]] = 1; wired[w[1]] = 1; });
+  parts.forEach(function (p) {
+    (PINS[p.type] || []).forEach(function (pn) {
+      var opt = OPTIONAL[p.type] && OPTIONAL[p.type].indexOf(pn.charAt(0)) >= 0 && pn !== 'GND';
+      if (!opt && !wired[p.id + '.' + pn]) res.warnings.push(p.id + ' pin ' + pn + ' is not connected');
+    });
+  });
+
+  var rail5 = find('mcu.5V'), railG = find('mcu.GND');
+  function powered(p, v, g) { return find(p.id + '.' + v) === rail5 && find(p.id + '.' + g) === railG; }
+
+  var loads = [], staticEdges = [], btns = [], pots = [], ldrs = [], resistors = [], pirs = [], srvs = [], srs = [];
+  parts.forEach(function (p) {
+    var f = function (pn) { return find(p.id + '.' + pn); };
+    switch (p.type) {
+      case 'LED': case 'BUZ': loads.push({ id: p.id, a: f('A'), k: f('K') }); break;
+      case 'RGB': ['R', 'G', 'B'].forEach(function (c) { loads.push({ id: p.id + '.' + c, a: f(c), k: f('K') }); }); break;
+      case 'SEG': 'abcdefg'.split('').forEach(function (c) { loads.push({ id: p.id + '.' + c, a: f(c), k: f('K') }); }); break;
+      case 'RES': resistors.push({ a: f('1'), b: f('2') }); staticEdges.push({ a: f('1'), b: f('2'), r: true }); break;
+      case 'BTN': btns.push({ id: p.id, a: f('1'), b: f('2') }); break;
+      case 'POT':
+        pots.push({ id: p.id, a: f('1'), w: f('W'), b: f('2') });
+        staticEdges.push({ a: f('1'), b: f('W'), r: true }, { a: f('W'), b: f('2'), r: true }); break;
+      case 'LDR': ldrs.push({ id: p.id, a: f('1'), b: f('2') }); staticEdges.push({ a: f('1'), b: f('2'), r: true }); break;
+      case 'PIR':
+        pirs.push({ id: p.id, o: f('O'), on: powered(p, 'V', 'G') });
+        if (!powered(p, 'V', 'G')) res.warnings.push(p.id + ' is not powered: wire V to 5V and G to GND');
+        break;
+      case 'SRV':
+        srvs.push({ id: p.id, s: f('S'), on: powered(p, 'V', 'G') });
+        if (!powered(p, 'V', 'G')) res.warnings.push(p.id + ' is not powered: wire V to 5V and G to GND');
+        break;
+      case 'SR':
+        srs.push({ id: p.id, ds: f('DS'), sh: f('SH'), st: f('ST'), q: [0, 1, 2, 3, 4, 5, 6, 7].map(function (i) { return f('Q' + i); }), on: powered(p, 'VCC', 'GND') });
+        if (!powered(p, 'VCC', 'GND')) res.warnings.push(p.id + ' is not powered: wire VCC to 5V and GND to GND');
+        break;
+    }
+  });
+
+  // reach(): which nets can a set of source nets reach, and with zero resistance (noR)?
+  function reach(sources, edges) {
+    var m = new Map();
+    function set(n, noR) {
+      var c = m.get(n);
+      if (!c) { m.set(n, { noR: noR }); return true; }
+      if (noR && !c.noR) { c.noR = true; return true; }
+      return false;
+    }
+    sources.forEach(function (n) { set(n, true); });
+    var changed = true;
+    while (changed) {
+      changed = false;
+      for (var i = 0; i < edges.length; i++) {
+        var e = edges[i], s;
+        if ((s = m.get(e.a)) && set(e.b, e.r ? false : s.noR)) changed = true;
+        if ((s = m.get(e.b)) && set(e.a, e.r ? false : s.noR)) changed = true;
+      }
+    }
+    return m;
+  }
+
+  // step-function signal: [[t, v], ...]
+  function sig(arr, tm, dflt) {
+    if (!arr || !arr.length) return dflt;
+    var v = dflt;
+    for (var i = 0; i < arr.length; i++) { if (arr[i][0] <= tm) v = arr[i][1]; else break; }
+    return v;
+  }
+
+  // 3. firmware compile -----------------------------------------------------------------------
+  var API = ['pinMode', 'digitalWrite', 'digitalRead', 'analogRead', 'analogWrite', 'delay', 'millis', 'shiftOut', 'map', 'constrain', 'Servo', 'Serial',
+    'HIGH', 'LOW', 'INPUT', 'OUTPUT', 'INPUT_PULLUP', 'A0', 'A1', 'MSBFIRST', 'LSBFIRST'];
+  var BLOCKED = ['fetch', 'XMLHttpRequest', 'importScripts', 'postMessage', 'self', 'globalThis', 'WebSocket', 'indexedDB', 'localStorage', 'document', 'window'];
+  var factory;
+  try {
+    factory = new Function(API.concat(BLOCKED).join(','),
+      code + '\n;return { setup: typeof setup === "function" ? setup : null, loop: typeof loop === "function" ? loop : null };');
+  } catch (e) {
+    res.verdict = 'Compile Error';
+    res.issues.push(String(e && e.message || e));
+    return res;
+  }
+
+  var PWM_PINS = { 3: 1, 5: 1, 6: 1, 9: 1, 10: 1, 11: 1 };
+  var SEGMAP = { 'abcdef': '0', 'bc': '1', 'abdeg': '2', 'abcdg': '3', 'bcfg': '4', 'acdfg': '5', 'acdefg': '6', 'abc': '7', 'abcdefg': '8', 'abcdfg': '9', '': ' ' };
+
+  // 4. run every test -------------------------------------------------------------------------
+  function runTest(t) {
+    var check = (new Function('return (' + t.check + ')'))();
+    var duration = t.duration;
+    var mode = {}, val = {}, pwm = {}, usedPins = {};    // pin name -> mode / output value / PWM duty
+    var servoAt = {};                                    // pin name -> angle (null = attached, not written)
+    var time = 0, ops = 0, ver = 0;
+    var snaps = [], reads = {}, logs = [], floating = null, error = null;
+    var cache = null;
+    srs.forEach(function (c) { c.shift = 0; c.latch = 0; c.psh = 0; c.pst = 0; });
+
+    function specFor(id) { return (t.inputs && t.inputs[id]) || (id.indexOf('BTN') === 0 ? t.input : null); }
+    function ik(tm) {
+      var k = '';
+      for (var i = 0; i < btns.length; i++) k += pressedAt(specFor(btns[i].id), tm) ? '1' : '0';
+      for (var j = 0; j < pirs.length; j++) k += pressedAt(specFor(pirs[j].id), tm) ? '1' : '0';
+      return k;
+    }
+
+    function sources(tm) {
+      var hs = [rail5], ls = [railG], full = [rail5], pw = [];
+      Object.keys(mode).forEach(function (p) {
+        if (mode[p] !== 'OUTPUT') return;
+        var n = find('mcu.' + p);
+        if (val[p]) { hs.push(n); if (pwm[p]) pw.push({ n: n, d: pwm[p] }); else full.push(n); }
+        else ls.push(n);
+      });
+      pirs.forEach(function (pr) { if (pr.on) { var m = pressedAt(specFor(pr.id), tm); (m ? hs : ls).push(pr.o); if (m) full.push(pr.o); } });
+      srs.forEach(function (c) {
+        if (!c.on) return;
+        for (var i = 0; i < 8; i++) { if ((c.latch >> i) & 1) { hs.push(c.q[i]); full.push(c.q[i]); } else ls.push(c.q[i]); }
+      });
+      return { hs: hs, ls: ls, full: full, pw: pw };
+    }
+
+    function solve(tm) {
+      var key = ver + '|' + ik(tm);
+      if (cache && cache.key === key) return cache;
+      var src = sources(tm), edges = staticEdges.slice();
+      btns.forEach(function (b) { if (pressedAt(specFor(b.id), tm)) edges.push({ a: b.a, b: b.b, r: false }); });
+      cache = { key: key, edges: edges, src: src, h: reach(src.hs, edges), l: reach(src.ls, edges), hf: null, pr: [] };
+      return cache;
+    }
+
+    // brightness of a lit load: 1 if a full source feeds it, else the strongest PWM duty that does
+    function levelOf(s, net) {
+      if (!s.src.pw.length) return 1;
+      if (!s.hf) s.hf = reach(s.src.full, s.edges);
+      if (s.hf.has(net)) return 1;
+      var best = 0;
+      s.src.pw.forEach(function (p, i) {
+        if (!s.pr[i]) s.pr[i] = reach([p.n], s.edges);
+        if (s.pr[i].has(net) && p.d > best) best = p.d;
+      });
+      return best;
+    }
+
+    // nodal analysis: voltage of a net, or null if it floats
+    function volts(net, tm) {
+      var fixed = new Map();
+      fixed.set(rail5, 5); fixed.set(railG, 0);
+      Object.keys(mode).forEach(function (p) {
+        if (mode[p] === 'OUTPUT') fixed.set(find('mcu.' + p), val[p] ? (pwm[p] ? 5 * pwm[p] : 5) : 0);
+      });
+      pirs.forEach(function (pr) { if (pr.on) fixed.set(pr.o, pressedAt(specFor(pr.id), tm) ? 5 : 0); });
+      srs.forEach(function (c) { if (c.on) for (var i = 0; i < 8; i++) fixed.set(c.q[i], (c.latch >> i) & 1 ? 5 : 0); });
+      if (fixed.has(net)) return fixed.get(net);
+      var ed = [];
+      resistors.forEach(function (r) { ed.push([r.a, r.b, 1 / 10000]); });
+      pots.forEach(function (p) {
+        var pos = Math.max(0, Math.min(1, sig(t.analog && t.analog[p.id], tm, 0)));
+        ed.push([p.a, p.w, 1 / Math.max(1, 10000 * pos)], [p.w, p.b, 1 / Math.max(1, 10000 * (1 - pos))]);
+      });
+      ldrs.forEach(function (l) {
+        var lux = Math.max(0, Math.min(1, sig(t.analog && t.analog[l.id], tm, 1)));
+        ed.push([l.a, l.b, 1 / (1000 * Math.pow(100, 1 - lux))]);
+      });
+      btns.forEach(function (b) { if (pressedAt(specFor(b.id), tm)) ed.push([b.a, b.b, 1]); });
+      // a lit LED conducts: model it as ~1 kΩ so it loads any divider it is hung on
+      var sv = solve(tm);
+      loads.forEach(function (ld) { if (sv.h.get(ld.a) && sv.l.get(ld.k)) ed.push([ld.a, ld.k, 1 / 1000]); });
+      Object.keys(mode).forEach(function (p) { if (mode[p] === 'INPUT_PULLUP') ed.push([find('mcu.' + p), rail5, 1 / 35000]); });
+      // component of unknown nodes around net
+      var idx = new Map(), list = [net], seenFixed = false;
+      idx.set(net, 0);
+      for (var q = 0; q < list.length; q++) {
+        var u = list[q];
+        ed.forEach(function (e) {
+          var o = e[0] === u ? e[1] : e[1] === u ? e[0] : null;
+          if (o === null || o === u) return;
+          if (fixed.has(o)) { seenFixed = true; return; }
+          if (!idx.has(o)) { idx.set(o, list.length); list.push(o); }
+        });
+      }
+      if (!seenFixed) return null;
+      var n = list.length, A = [], b = [];
+      for (var i = 0; i < n; i++) { A.push(new Array(n).fill(0)); b.push(0); }
+      ed.forEach(function (e) {
+        var x = e[0], y = e[1], g = e[2];
+        if (x === y) return;
+        var ix = idx.has(x) ? idx.get(x) : -1, iy = idx.has(y) ? idx.get(y) : -1;
+        if (ix < 0 && iy < 0) return;
+        if (ix >= 0) { A[ix][ix] += g; if (iy >= 0) A[ix][iy] -= g; else if (fixed.has(y)) b[ix] += g * fixed.get(y); }
+        if (iy >= 0) { A[iy][iy] += g; if (ix >= 0) A[iy][ix] -= g; else if (fixed.has(x)) b[iy] += g * fixed.get(x); }
+      });
+      for (var c = 0; c < n; c++) {
+        var piv = c;
+        for (var r = c + 1; r < n; r++) if (Math.abs(A[r][c]) > Math.abs(A[piv][c])) piv = r;
+        var tmp = A[c]; A[c] = A[piv]; A[piv] = tmp; var tb = b[c]; b[c] = b[piv]; b[piv] = tb;
+        if (Math.abs(A[c][c]) < 1e-15) continue;
+        for (var r2 = c + 1; r2 < n; r2++) {
+          var fct = A[r2][c] / A[c][c];
+          if (!fct) continue;
+          for (var k = c; k < n; k++) A[r2][k] -= fct * A[c][k];
+          b[r2] -= fct * b[c];
+        }
+      }
+      var v = new Array(n).fill(0);
+      for (var i2 = n - 1; i2 >= 0; i2--) {
+        var sum = b[i2];
+        for (var k2 = i2 + 1; k2 < n; k2++) sum -= A[i2][k2] * v[k2];
+        v[i2] = Math.abs(A[i2][i2]) < 1e-15 ? 0 : sum / A[i2][i2];
+      }
+      return v[0];
+    }
+
+    // digital level of a net: 1, 0, or null when it floats
+    function logic(net, pullup) {
+      var s = solve(time), h = s.h.get(net), l = s.l.get(net);
+      if (h && !l) return 1;
+      if (l && !h) return 0;
+      if (h && l) {
+        if (h.noR && !l.noR) return 1;
+        if (l.noR && !h.noR) return 0;
+        var v = volts(net, time);
+        return v !== null && v >= 2.5 ? 1 : 0;
+      }
+      return pullup ? 1 : null;
+    }
+
+    // shift registers react to rising edges on their clock and latch inputs
+    function chipTick() {
+      if (!srs.length) return;
+      var moved = false;
+      srs.forEach(function (c) {
+        if (!c.on) return;
+        var sh = logic(c.sh) || 0, st = logic(c.st) || 0, ds = logic(c.ds) || 0;
+        if (sh && !c.psh) c.shift = ((c.shift << 1) | ds) & 255;
+        if (st && !c.pst && c.latch !== c.shift) { c.latch = c.shift; moved = true; }
+        c.psh = sh; c.pst = st;
+      });
+      if (moved) ver++;
+    }
+
+    function snapshot() {
+      var s = solve(time);
+      var leds = {}, burned = [], short = false, pins = {}, angles = {};
+      loads.forEach(function (ld) {
+        var a = s.h.get(ld.a), k = s.l.get(ld.k), on = !!(a && k);
+        leds[ld.id] = on ? Math.round(levelOf(s, ld.a) * 100) / 100 : 0;
+        if (on && a.noR && k.noR) burned.push(ld.id);
+      });
+      s.h.forEach(function (hv, n) { var lv = s.l.get(n); if (lv && hv.noR && lv.noR) short = true; });
+      Object.keys(mode).forEach(function (p) { if (mode[p] === 'OUTPUT') pins[p] = val[p] ? (pwm[p] ? Math.round(pwm[p] * 255) : 1) : 0; });
+      srvs.forEach(function (sv) {
+        var ang = null;
+        if (sv.on) Object.keys(servoAt).forEach(function (p) { if (find('mcu.' + p) === sv.s && servoAt[p] !== null) ang = servoAt[p]; });
+        angles[sv.id] = ang;
+      });
+      var key = JSON.stringify([leds, burned, short, pins, angles]);
+      var last = snaps[snaps.length - 1];
+      if (!last || last.key !== key) snaps.push({ t: time, leds: leds, burned: burned, short: short, pins: pins, angles: angles, key: key });
+    }
+
+    function advance(ms) {
+      var rem = ms;
+      while (rem > 0) {
+        var step = Math.min(rem, 1);
+        var before = ik(time);
+        time += step; rem -= step;
+        if (ik(time) !== before) { chipTick(); snapshot(); }
+      }
+    }
+    function op() { if (++ops > 2500000) throw new Error('Too many operations (infinite loop without delay()?)'); }
+    function pinName(p) {
+      if (p === 14) { usedPins[14] = 1; return 'A0'; }
+      if (p === 15) { usedPins[15] = 1; return 'A1'; }
+      if (typeof p !== 'number' || p < 2 || p > 13 || p % 1) throw new Error('Invalid pin ' + p + ' (use 2..13, A0 or A1)');
+      usedPins[p] = 1;
+      return 'D' + p;
+    }
+    function pinNum(n) { return n === 'A0' ? 14 : n === 'A1' ? 15 : +n.slice(1); }
+
+    function Servo() { this.pin = null; }
+    Servo.prototype.attach = function (p) { op(); var n = pinName(p); this.pin = n; if (!(n in servoAt)) servoAt[n] = null; };
+    Servo.prototype.write = function (a) {
+      op();
+      if (!this.pin) throw new Error('Call attach(pin) before write()');
+      servoAt[this.pin] = Math.max(0, Math.min(180, Math.round(+a || 0)));
+      advance(0.01); snapshot();
+    };
+    Servo.prototype.read = function () { op(); return this.pin ? (servoAt[this.pin] || 0) : 0; };
+    Servo.prototype.detach = function () { op(); if (this.pin) { delete servoAt[this.pin]; this.pin = null; } advance(0.01); snapshot(); };
+
+    var api = {
+      pinMode: function (p, m) { op(); var n = pinName(p); mode[n] = m; delete pwm[n]; if (m !== 'OUTPUT') delete val[n]; else val[n] = 0; ver++; chipTick(); advance(0.01); snapshot(); },
+      digitalWrite: function (p, v) {
+        op(); var n = pinName(p);
+        if (mode[n] === 'OUTPUT') { val[n] = v ? 1 : 0; delete pwm[n]; ver++; chipTick(); }
+        advance(0.01); snapshot();
+      },
+      analogWrite: function (p, v) {
+        op();
+        if (!PWM_PINS[p]) throw new Error('analogWrite on pin ' + p + ': PWM only works on pins 3, 5, 6, 9, 10 and 11');
+        var n = pinName(p), x = Math.max(0, Math.min(255, Math.round(+v || 0)));
+        mode[n] = 'OUTPUT'; val[n] = x > 0 ? 1 : 0;
+        if (x > 0 && x < 255) pwm[n] = x / 255; else delete pwm[n];
+        ver++; chipTick(); advance(0.01); snapshot();
+      },
+      digitalRead: function (p) {
+        op(); var n = pinName(p); reads[pinNum(n)] = 1; advance(0.01);
+        if (mode[n] === 'OUTPUT') return val[n];
+        var lv = logic(find('mcu.' + n), mode[n] === 'INPUT_PULLUP');
+        if (lv === null) { if (!floating) floating = n; return 0; }
+        return lv;
+      },
+      analogRead: function (p) {
+        op();
+        if (p === 0 || p === 1) p += 14;
+        if (p !== 14 && p !== 15) throw new Error('analogRead(' + p + '): use an analog pin, A0 or A1');
+        var n = pinName(p); reads[p] = 1; advance(0.01);
+        var v = volts(find('mcu.' + n), time);
+        if (v === null) { if (!floating) floating = n; return 0; }
+        return Math.max(0, Math.min(1023, Math.round(v / 5 * 1023)));
+      },
+      shiftOut: function (dp, cp, order, value) {
+        for (var i = 0; i < 8; i++) {
+          var bit = order === 0 ? (value >> i) & 1 : (value >> (7 - i)) & 1;
+          api.digitalWrite(dp, bit); api.digitalWrite(cp, 1); api.digitalWrite(cp, 0);
+        }
+      },
+      map: function (x, a, b, c, d) { return Math.trunc((x - a) * (d - c) / (b - a) + c); },
+      constrain: function (x, a, b) { return x < a ? a : x > b ? b : x; },
+      delay: function (ms) { op(); advance(Math.max(0, +ms || 0)); snapshot(); },
+      millis: function () { op(); advance(0.01); return Math.floor(time); },
+      Servo: Servo,
+      Serial: {
+        begin: function () {},
+        print: function (x) { logs.push(String(x)); },
+        println: function (x) { logs.push(String(x)); }
+      },
+      HIGH: 1, LOW: 0, INPUT: 'INPUT', OUTPUT: 'OUTPUT', INPUT_PULLUP: 'INPUT_PULLUP', A0: 14, A1: 15, MSBFIRST: 1, LSBFIRST: 0
+    };
+
+    try {
+      var prog = factory.apply(null, API.map(function (k) { return api[k]; }));
+      snapshot();
+      if (prog.setup) prog.setup();
+      var idle = 0;
+      while (time < duration) {
+        if (!prog.loop) { advance(duration - time); break; }
+        var t0 = time;
+        prog.loop();
+        if (time === t0) { if (++idle >= 3) { advance(duration - time); break; } } else idle = 0;
+      }
+      snapshot();
+    } catch (e) {
+      error = String(e && e.message || e);
+    }
+
+    // helpers handed to the hidden check functions
+    function at(tm) {
+      var lo = 0, hi = snaps.length - 1;
+      if (tm < snaps[0].t) return snaps[0];
+      while (lo < hi) { var mid = (lo + hi + 1) >> 1; if (snaps[mid].t <= tm) lo = mid; else hi = mid - 1; }
+      return snaps[lo];
+    }
+    var ids = loads.map(function (l) { return l.id; });
+    // pieces of the run where one load is on/off, clipped to [a,b]
+    function segs(id, a, b) {
+      var out = [], i0 = Math.max(0, snaps.indexOf(at(a)));
+      for (var i = i0; i < snaps.length; i++) {
+        var s0 = snaps[i].t, s1 = i + 1 < snaps.length ? snaps[i + 1].t : duration;
+        if (s0 >= b) break;
+        var x = Math.max(a, s0), y = Math.min(b, s1);
+        if (y > x) out.push([!!snaps[i].leds[id], x, y]);
+      }
+      return out;
+    }
+    function duty(id, a, b) { var on = 0; segs(id, a, b).forEach(function (s) { if (s[0]) on += s[2] - s[1]; }); return on / (b - a); }
+    function gap(id, a, b) { var worst = 0, run = 0; segs(id, a, b).forEach(function (s) { if (s[0]) run = 0; else { run += s[2] - s[1]; if (run > worst) worst = run; } }); return worst; }
+    function decode(lit) { return SEGMAP.hasOwnProperty(lit) ? SEGMAP[lit] : '?'; }
+    var H = {
+      ids: ids,
+      on: function (id, tm) { return !!at(tm).leds[id]; },
+      level: function (id, tm) { return at(tm).leds[id] || 0; },
+      anyOn: function (tm) { return ids.some(function (i) { return at(tm).leds[i]; }); },
+      lit: function (tm) { var l = ids.filter(function (i) { return at(tm).leds[i]; }); return l.length ? l.join('+') : 'none'; },
+      count: function (tm) { return ids.filter(function (i) { return at(tm).leds[i]; }).length; },
+      pin: function (p, tm) { var n = p === 14 ? 'A0' : p === 15 ? 'A1' : 'D' + p; return at(tm).pins[n] || 0; },
+      read: function (p) { if (p === 0 || p === 1) p += 14; return !!reads[p]; },
+      logs: logs,
+      used: function () { return Object.keys(usedPins).map(Number).sort(function (a, b) { return a - b; }); },
+      duty: duty,
+      gap: gap,
+      angle: function (id, tm) { var a = at(tm).angles[id]; return a === undefined ? null : a; },
+      has: function (prefix) { return ids.some(function (i) { return i.indexOf(prefix + '.') === 0 || i === prefix; }); },
+      // what a 7-segment display shows at one instant
+      digit: function (id, tm) { var s = at(tm), lit = ''; 'abcdefg'.split('').forEach(function (c) { if (s.leds[id + '.' + c]) lit += c; }); return decode(lit); },
+      // what a (possibly multiplexed) 7-segment display shows steadily over [a,b]; '~' = flicker or dim
+      shown: function (id, a, b) {
+        var lit = '';
+        for (var i = 0; i < 7; i++) {
+          var c = 'abcdefg'.charAt(i), d = duty(id + '.' + c, a, b);
+          if (d >= 0.12 && gap(id + '.' + c, a, b) <= 12) lit += c;
+          else if (d > 0.03) return '~';
+        }
+        return decode(lit);
+      }
+    };
+
+    var pass = true, message = '', kind = '';
+    if (error) {
+      pass = false; message = 'Runtime error: ' + error;
+      kind = /Too many operations/.test(error) ? 'Time Limit Exceeded' : 'Runtime Error';
+    } else {
+      var burn = snaps.filter(function (s) { return s.burned.length; })[0];
+      var sh = snaps.filter(function (s) { return s.short; })[0];
+      if (sh) { pass = false; kind = 'Wrong Answer'; message = 'Short circuit at t=' + Math.round(sh.t) + 'ms: a supply path reaches ground with no resistance.'; }
+      else if (burn) { pass = false; kind = 'Wrong Answer'; message = burn.burned.join(', ') + ' burned out at t=' + Math.round(burn.t) + 'ms: no current-limiting resistor.'; }
+      else if (floating) { pass = false; kind = 'Wrong Answer'; message = floating + ' was read while floating. Add a pull-up/pull-down, use INPUT_PULLUP, or complete the divider.'; }
+      else {
+        var m;
+        try { m = check(H); } catch (e) { m = 'Checker error: ' + e.message; }
+        if (m) { pass = false; kind = 'Wrong Answer'; message = t.hidden ? 'Failed a hidden test case.' : String(m); }
+      }
+    }
+
+    // load on-intervals [start, end, brightness] for the timeline view
+    var tl = {};
+    ids.forEach(function (id) {
+      var iv = [], start = null, lvl = 0;
+      snaps.forEach(function (s) {
+        var v = s.leds[id] || 0;
+        if (v !== lvl) {
+          if (lvl) iv.push([start, s.t, lvl]);
+          lvl = v; start = s.t;
+        }
+      });
+      if (lvl) iv.push([start, duration, lvl]);
+      tl[id] = iv;
+    });
+    var inputsTl = [];
+    btns.forEach(function (b) { var sp = specFor(b.id); if (sp && sp.windows) inputsTl.push({ label: b.id, iv: sp.windows }); });
+    if (!btns.length && t.input && t.input.windows) inputsTl.push({ label: 'BTN', iv: t.input.windows });
+    pirs.forEach(function (p) { var sp = specFor(p.id); inputsTl.push({ label: p.id, iv: sp && sp.windows ? sp.windows : [] }); });
+    pots.concat(ldrs).forEach(function (p) {
+      var arr = (t.analog && t.analog[p.id]) || [], iv = [];
+      for (var i = 0; i < arr.length; i++) iv.push([arr[i][0], i + 1 < arr.length ? arr[i + 1][0] : duration, Math.max(0.04, arr[i][1])]);
+      inputsTl.push({ label: p.id, iv: iv });
+    });
+    var servoTl = [];
+    srvs.forEach(function (sv) {
+      var iv = [], start = null, cur = null;
+      snaps.forEach(function (s) {
+        var a = s.angles[sv.id];
+        if (a !== cur) { if (cur !== null) iv.push([start, s.t, Math.max(0.04, cur / 180), cur]); cur = a; start = s.t; }
+      });
+      if (cur !== null) iv.push([start, duration, Math.max(0.04, cur / 180), cur]);
+      servoTl.push({ label: sv.id, iv: iv });
+    });
+
+    return { name: t.name, hidden: !!t.hidden, pass: pass, kind: kind, message: message, timeline: { duration: duration, leds: tl, inputs: inputsTl, servos: servoTl } };
+  }
+
+  tests.forEach(function (t) { res.tests.push(runTest(t)); });
+  var failed = res.tests.filter(function (r) { return !r.pass; })[0];
+  if (failed) res.verdict = failed.kind || 'Wrong Answer';
+  return res;
+}
+
+if (typeof module !== 'undefined') module.exports = { judge: judge, pressedAt: pressedAt, scoreFor: scoreFor, ratingFor: ratingFor };
+
+;
+'use strict';
+/*
+ * problems.js — problem bank.
+ *
+ * Each problem:
+ *   limits : max parts of each type the student may place (LED, RES, BTN, BUZ)
+ *   ref    : component count of the best-known solution (score = ref / used, capped at 100)
+ *   hints  : optional list of progressive hints shown on request (UI only, never sent to the judge)
+ *   tests  : { name, hidden, duration(ms), input(button timeline), check(H) }
+ *            check() gets the helper object H from judge.js and returns null on success
+ *            or a string explaining the failure. check() must be self-contained.
+ *
+ * In production, hidden tests and reference solutions live on the server only.
+ */
+var PROBLEMS = [
+  {
+    id: 'hello-led',
+    title: 'Hello, LED',
+    difficulty: 'Easy',
+    ref: 2,
+    limits: { LED: 1, RES: 1 },
+    statement: [
+      'Light an LED and keep it lit.',
+      'Build the circuit with the parts provided, then write firmware that turns the LED on. **Any** digital pin (2–13) may drive it.',
+      'Remember: an LED needs a current-limiting resistor, or it burns out.'
+    ],
+    hints: [
+      'An LED has two legs: the **anode (A, +)** and the **cathode (K, −)**. Current must flow from A to K.',
+      'Build one path: a digital pin → resistor → LED anode, then LED cathode → **GND**.',
+      'In `setup()`, call `pinMode(pin, OUTPUT)` and then `digitalWrite(pin, HIGH)`, using the pin you wired.'
+    ],
+    starter: 'function setup() {\n  // configure pins here\n}\n\nfunction loop() {\n  // runs forever\n}\n',
+    tests: [
+      { name: 'LED is lit', duration: 1500, input: null,
+        check: function (H) { var ts = [100, 700, 1400]; for (var i = 0; i < ts.length; i++) if (!H.anyOn(ts[i])) return 'The LED is off at t=' + ts[i] + 'ms.'; return null; } },
+      { name: 'Stays lit', hidden: true, duration: 6000, input: null,
+        check: function (H) { return H.anyOn(5900) && H.anyOn(3000) ? null : 'x'; } }
+    ]
+  },
+  {
+    id: 'blink-1hz',
+    title: 'Blink at 1 Hz',
+    difficulty: 'Easy',
+    ref: 2,
+    limits: { LED: 1, RES: 1 },
+    statement: [
+      'Make an LED blink: **on for 500 ms, off for 500 ms**, repeating forever.',
+      'Timing is checked with a few milliseconds of tolerance.'
+    ],
+    hints: [
+      'The circuit is the same as in *Hello, LED*.',
+      'Put the blinking code in `loop()`, because `setup()` only runs once.',
+      'Pattern: `digitalWrite(pin, HIGH)`, `delay(500)`, `digitalWrite(pin, LOW)`, `delay(500)`.'
+    ],
+    starter: 'function setup() {\n  \n}\n\nfunction loop() {\n  \n}\n',
+    tests: [
+      { name: 'Blinks on/off', duration: 3200, input: null,
+        check: function (H) {
+          var exp = [[250, 1], [750, 0], [1250, 1], [1750, 0]];
+          for (var i = 0; i < exp.length; i++) if (H.anyOn(exp[i][0]) !== !!exp[i][1]) return 'Expected LED ' + (exp[i][1] ? 'ON' : 'OFF') + ' at t=' + exp[i][0] + 'ms.';
+          return null;
+        } },
+      { name: 'Timing accuracy', hidden: true, duration: 6200, input: null,
+        check: function (H) {
+          for (var k = 0; k < 5; k++) {
+            var s = k * 1000;
+            if (!H.anyOn(s + 30) || !H.anyOn(s + 470) || H.anyOn(s + 530) || H.anyOn(s + 970)) return 'x';
+          }
+          return null;
+        } }
+    ]
+  },
+  {
+    id: 'button-light',
+    title: 'Button Light',
+    difficulty: 'Easy',
+    ref: 3,
+    limits: { LED: 1, RES: 1, BTN: 1 },
+    statement: [
+      'The LED must be on **only while the button is held**.',
+      'Read the button from pin `2` in your firmware — a circuit that powers the LED straight through the button will not be accepted.',
+      'Tip: `pinMode(2, INPUT_PULLUP)` enables the internal pull-up, so the button only needs to connect pin 2 to GND (pressed = `LOW`).'
+    ],
+    hints: [
+      'Wire the button between **D2** and **GND**. The LED + resistor go on a different pin, as in *Hello, LED*.',
+      'In `setup()`: `pinMode(2, INPUT_PULLUP)` for the button and `pinMode(ledPin, OUTPUT)` for the LED.',
+      'In `loop()`: when `digitalRead(2) === LOW` the button is pressed, so write HIGH to the LED pin, otherwise LOW.'
+    ],
+    starter: 'function setup() {\n  \n}\n\nfunction loop() {\n  \n}\n',
+    tests: [
+      { name: 'Follows the button', duration: 3000, input: { windows: [[1000, 2000]] },
+        check: function (H) {
+          if (!H.read(2)) return 'Your firmware never reads pin 2.';
+          if (H.anyOn(500)) return 'LED should be OFF before the button is pressed (t=500ms).';
+          if (!H.anyOn(1500)) return 'LED should be ON while the button is held (t=1500ms).';
+          if (H.anyOn(2500)) return 'LED should turn OFF after release (t=2500ms).';
+          return null;
+        } },
+      { name: 'Short presses, fast response', hidden: true, duration: 3000,
+        input: { windows: [[507, 547], [1013, 1053], [1507, 2507]] },
+        check: function (H) {
+          var on = [527, 1033, 2000], off = [300, 800, 1300, 2800];
+          for (var i = 0; i < on.length; i++) if (!H.anyOn(on[i])) return 'x';
+          for (var j = 0; j < off.length; j++) if (H.anyOn(off[j])) return 'x';
+          return null;
+        } }
+    ]
+  },
+  {
+    id: 'alternate',
+    title: 'Alternating LEDs',
+    difficulty: 'Medium',
+    ref: 3,
+    limits: { LED: 2, RES: 2 },
+    statement: [
+      'Two LEDs must **alternate**: LED A on for 250 ms while LED B is off, then swap, forever.',
+      'Exactly one LED is lit at any moment (ignore sub-millisecond switching).',
+      'You are given two resistors, but a clever layout needs fewer. Fewer components = a higher score.'
+    ],
+    hints: [
+      'Start with a simple version that works (two LEDs, two resistors, two pins), then try to remove a part.',
+      'A pin can be a source (HIGH) or a sink (LOW). What if the two LEDs share the same two pins and swap roles?',
+      'Try placing the two LEDs facing **opposite directions** between two pins, with a single resistor in the path. Flip both pins every 250 ms.'
+    ],
+    starter: 'function setup() {\n  \n}\n\nfunction loop() {\n  \n}\n',
+    tests: [
+      { name: 'LEDs alternate', duration: 3000, input: null,
+        check: function (H) {
+          if (H.ids.length < 2) return 'Place two LEDs.';
+          var prev = null;
+          for (var k = 0; k < 10; k++) {
+            var tm = 125 + 250 * k;
+            if (H.count(tm) !== 1) return 'Exactly one LED must be lit at t=' + tm + 'ms (found ' + H.count(tm) + ').';
+            var cur = H.lit(tm);
+            if (prev !== null && cur === prev) return 'The LEDs must swap every 250ms (t=' + tm + 'ms).';
+            prev = cur;
+          }
+          return null;
+        } },
+      { name: 'Switch timing', hidden: true, duration: 4000, input: null,
+        check: function (H) {
+          for (var k = 1; k < 12; k++) {
+            var e = 250 * k;
+            var a = H.lit(e - 15), b = H.lit(e + 15);
+            if (a === 'none' || b === 'none' || a === b) return 'x';
+            if (H.lit(e - 125) !== a || H.lit(e + 125) !== b) return 'x';
+          }
+          return null;
+        } }
+    ]
+  },
+  {
+    id: 'toggle-debounce',
+    title: 'Toggle with Debounce',
+    difficulty: 'Hard',
+    ref: 3,
+    limits: { LED: 1, RES: 1, BTN: 1 },
+    statement: [
+      'Each button press must **toggle** the LED (press once = on, press again = off). Holding the button must not toggle repeatedly.',
+      'Real buttons *bounce*: for a few milliseconds the contact chatters between pressed and released. The judge simulates this, including on release, with different chatter lengths in the hidden tests.',
+      'Read the button on pin `2`. The LED can use any pin.'
+    ],
+    hints: [
+      'The circuit is the same as *Button Light*.',
+      'Remember the LED state in a variable, and toggle it only on the moment the button **goes from released to pressed**, not while it is held.',
+      'After you detect an edge, `delay()` about 30–50 ms so the chatter passes, then wait until the button is released before looking for the next press.'
+    ],
+    starter: 'function setup() {\n  \n}\n\nfunction loop() {\n  \n}\n',
+    tests: [
+      { name: 'Toggles on each press', duration: 4000,
+        input: { windows: [[1000, 1300], [2000, 2300], [3000, 3300]], bounce: 12, seg: 2 },
+        check: function (H) {
+          if (!H.read(2)) return 'Your firmware never reads pin 2.';
+          var exp = [[900, 0], [1500, 1], [2500, 0], [3500, 1]];
+          for (var i = 0; i < exp.length; i++) if (H.anyOn(exp[i][0]) !== !!exp[i][1]) return 'Expected LED ' + (exp[i][1] ? 'ON' : 'OFF') + ' at t=' + exp[i][0] + 'ms.';
+          return null;
+        } },
+      { name: 'Different bounce, quick taps', hidden: true, duration: 3200,
+        input: { windows: [[500, 600], [900, 1400], [1700, 1750], [2500, 2900]], bounce: 20, seg: 3 },
+        check: function (H) {
+          var exp = [[450, 0], [800, 1], [1200, 0], [2000, 1], [2800, 0]];
+          for (var i = 0; i < exp.length; i++) if (H.anyOn(exp[i][0]) !== !!exp[i][1]) return 'x';
+          return null;
+        } },
+      { name: 'Long hold toggles once', hidden: true, duration: 3500,
+        input: { windows: [[500, 2500]], bounce: 10, seg: 2 },
+        check: function (H) {
+          if (H.anyOn(400) || !H.anyOn(1000) || !H.anyOn(2000) || !H.anyOn(3200)) return 'x';
+          return null;
+        } }
+    ]
+  },
+  {
+    id: 'ping-pong',
+    title: 'Ping-Pong Chase',
+    difficulty: 'Medium',
+    ref: 4,
+    limits: { LED: 3, RES: 3 },
+    statement: [
+      'Three LEDs chase back and forth, **one lit at a time, 200 ms each**: A, B, C, B, A, B, C, B, A... (A and C are the two ends, B is the middle). Repeat forever.',
+      'You may use three pins, one per LED. You are given three resistors, but an LED only needs a resistor *somewhere* in its path. Fewer parts = higher score.'
+    ],
+    hints: [
+      'First get a version working with three LEDs, three resistors and three pins. Then try to remove resistors.',
+      'Only one LED is ever lit at a time, so the LEDs can **share** a single resistor to GND.',
+      'Join all three cathodes (K) together, run **one** resistor from that joint to GND, and give each anode its own pin. In `loop()` raise one pin at a time: 3, 4, 5, 4, ...'
+    ],
+    starter: 'function setup() {\n  \n}\n\nfunction loop() {\n  \n}\n',
+    tests: [
+      { name: 'Sweeps back and forth', duration: 2500, input: null,
+        check: function (H) {
+          if (H.ids.length < 3) return 'Place three LEDs.';
+          var seq = [];
+          for (var k = 0; k < 12; k++) {
+            var tm = 100 + 200 * k;
+            if (H.count(tm) !== 1) return 'Exactly one LED must be lit at t=' + tm + 'ms (found ' + H.count(tm) + ').';
+            seq.push(H.lit(tm));
+          }
+          if (seq[0] === seq[1] || seq[1] === seq[2] || seq[0] === seq[2]) return 'The first three steps must light three different LEDs (end, middle, other end).';
+          var order = [seq[0], seq[1], seq[2], seq[1]];
+          for (var j = 3; j < seq.length; j++) {
+            if (seq[j] !== order[j % 4]) return 'At t=' + (100 + 200 * j) + 'ms expected ' + order[j % 4] + ' but ' + seq[j] + ' is lit. The sweep must bounce back: A, B, C, B, A, B...';
+          }
+          return null;
+        } },
+      { name: 'Timing accuracy', hidden: true, duration: 4200, input: null,
+        check: function (H) {
+          var first = H.lit(15), mid = H.lit(215), last = H.lit(415);
+          if (first === 'none' || first === mid || mid === last || first === last) return 'x';
+          var order = [first, mid, last, mid];
+          for (var k = 0; k < 20; k++) {
+            var offs = [15, 185];
+            for (var i = 0; i < 2; i++) {
+              var tm = 200 * k + offs[i];
+              if (H.count(tm) !== 1 || H.lit(tm) !== order[k % 4]) return 'x';
+            }
+          }
+          return null;
+        } }
+    ]
+  },
+  {
+    id: 'binary-counter',
+    title: 'Binary Counter',
+    difficulty: 'Medium',
+    ref: 4,
+    limits: { LED: 2, RES: 2, BTN: 1 },
+    statement: [
+      'Count button presses in binary on two LEDs. **LED1 is bit 0** (least significant) and **LED2 is bit 1**. After *n* presses the LEDs show *n* mod 4, so the display goes 00 → 01 → 10 → 11 → 00...',
+      'Count a press the moment the button goes **down**, and count each press only once even if it is held. Read the button on pin `2`.',
+      'Some presses in the hidden tests are very short, so do not sleep for long inside `loop()`.'
+    ],
+    hints: [
+      'Wire the button between **D2** and **GND** and use `INPUT_PULLUP`. Give each LED its own pin.',
+      'Keep `count` and `last` (the previous reading) in variables. A press is the moment `last` was HIGH and the new reading is LOW.',
+      'Write the bits with `digitalWrite(3, count & 1)` and `digitalWrite(4, count & 2 ? HIGH : LOW)`. Both LEDs can share a single resistor to GND.'
+    ],
+    starter: 'function setup() {\n  \n}\n\nfunction loop() {\n  \n}\n',
+    tests: [
+      { name: 'Counts presses', duration: 3600,
+        input: { windows: [[500, 700], [1000, 1200], [1500, 1700], [2000, 2200], [2500, 2700], [3000, 3200]] },
+        check: function (H) {
+          if (!H.read(2)) return 'Your firmware never reads pin 2.';
+          if (H.ids.length < 2) return 'Place two LEDs.';
+          var starts = [500, 1000, 1500, 2000, 2500, 3000];
+          var samples = [[300, 0]];
+          for (var k = 1; k <= 6; k++) { samples.push([starts[k - 1] + 100, k % 4]); samples.push([starts[k - 1] + 350, k % 4]); }
+          for (var i = 0; i < samples.length; i++) {
+            var v = (H.on('LED1', samples[i][0]) ? 1 : 0) + (H.on('LED2', samples[i][0]) ? 2 : 0);
+            if (v !== samples[i][1]) return 'At t=' + samples[i][0] + 'ms the LEDs show ' + v + ' but should show ' + samples[i][1] + ' (LED1 = bit 0, LED2 = bit 1).';
+          }
+          return null;
+        } },
+      { name: 'Quick taps and wrap-around', hidden: true, duration: 2600,
+        input: { windows: [[313, 348], [641, 676], [957, 992], [1277, 1312], [1583, 1618], [1871, 1906]] },
+        check: function (H) {
+          if (!H.read(2)) return 'x';
+          var starts = [0, 313, 641, 957, 1277, 1583, 1871];
+          for (var k = 0; k <= 6; k++) {
+            var tm = k === 0 ? 150 : starts[k] + 100;
+            var v = (H.on('LED1', tm) ? 1 : 0) + (H.on('LED2', tm) ? 2 : 0);
+            if (v !== k % 4) return 'x';
+          }
+          return null;
+        } },
+      { name: 'Long hold counts once', hidden: true, duration: 3000,
+        input: { windows: [[300, 1700], [2000, 2060]] },
+        check: function (H) {
+          var exp = [[200, 0], [1000, 1], [1650, 1], [1900, 1], [2300, 2], [2900, 2]];
+          for (var i = 0; i < exp.length; i++) {
+            var v = (H.on('LED1', exp[i][0]) ? 1 : 0) + (H.on('LED2', exp[i][0]) ? 2 : 0);
+            if (v !== exp[i][1]) return 'x';
+          }
+          return null;
+        } }
+    ]
+  },
+  {
+    id: 'doorbell',
+    title: 'Doorbell',
+    difficulty: 'Medium',
+    ref: 3,
+    limits: { BUZ: 1, RES: 1, BTN: 1 },
+    statement: [
+      'Build a doorbell. Each press of the button rings the buzzer with **three beeps**: 150 ms on, 150 ms off, three times. Then it goes quiet and waits for the next press.',
+      'The first beep must start right away (within about 20 ms of the press), even for a very short tap. Holding the button down must **not** ring it again. Read the button on pin `2`.',
+      'A buzzer is wired like an LED (+ to the pin side, − to GND), and it needs a current-limiting resistor too.'
+    ],
+    hints: [
+      'Button between **D2** and **GND** with `INPUT_PULLUP`. Buzzer + resistor on another pin, as with an LED.',
+      'Do not ring while the button is *down*. Ring when it **goes** down: the previous reading was HIGH and the new one is LOW.',
+      'When you detect the press, run a `for` loop: `digitalWrite(pin, HIGH)`, `delay(150)`, `digitalWrite(pin, LOW)`, `delay(150)`, three times. Then store the new reading in `last`.'
+    ],
+    starter: 'function setup() {\n  \n}\n\nfunction loop() {\n  \n}\n',
+    tests: [
+      { name: 'Three beeps per press', duration: 2200, input: { windows: [[500, 700]] },
+        check: function (H) {
+          if (!H.read(2)) return 'Your firmware never reads pin 2.';
+          if (H.anyOn(300)) return 'The buzzer should be silent before the button is pressed (t=300ms).';
+          for (var k = 0; k < 3; k++) {
+            var on = 500 + 300 * k + 75, off = 500 + 300 * k + 225;
+            if (!H.anyOn(on)) return 'Beep ' + (k + 1) + ' is missing: the buzzer should be ON at t=' + on + 'ms.';
+            if (H.anyOn(off)) return 'The buzzer should be OFF between beeps (t=' + off + 'ms).';
+          }
+          if (H.anyOn(1600) || H.anyOn(1900)) return 'The buzzer should be silent after the three beeps.';
+          return null;
+        } },
+      { name: 'Quick tap, then a long press', hidden: true, duration: 3700, input: { windows: [[300, 330], [2000, 2400]] },
+        check: function (H) {
+          var starts = [300, 2000];
+          for (var i = 0; i < 2; i++) {
+            for (var k = 0; k < 3; k++) {
+              var b = starts[i] + 300 * k;
+              if (!H.anyOn(b + 20) || !H.anyOn(b + 130) || H.anyOn(b + 170) || H.anyOn(b + 280)) return 'x';
+            }
+          }
+          if (H.anyOn(200) || H.anyOn(1500) || H.anyOn(1800) || H.anyOn(3100) || H.anyOn(3500)) return 'x';
+          return null;
+        } },
+      { name: 'Holding rings only once', hidden: true, duration: 3600, input: { windows: [[500, 2500]] },
+        check: function (H) {
+          for (var k = 0; k < 3; k++) {
+            var b = 500 + 300 * k;
+            if (!H.anyOn(b + 20) || !H.anyOn(b + 130) || H.anyOn(b + 170) || H.anyOn(b + 280)) return 'x';
+          }
+          var quiet = [1600, 1900, 2200, 2450, 2600, 3000, 3400];
+          for (var j = 0; j < quiet.length; j++) if (H.anyOn(quiet[j])) return 'x';
+          return null;
+        } }
+    ]
+  },
+  {
+    id: 'three-leds-two-pins',
+    title: 'Three LEDs, Two Pins',
+    difficulty: 'Hard',
+    ref: 5,
+    limits: { LED: 3, RES: 3 },
+    statement: [
+      'Light three LEDs **one after another, 300 ms each**, repeating forever. Exactly one LED is lit at any moment, and every LED gets a turn.',
+      'The catch: your firmware may only touch **two pins, 2 and 3**. The 5V and GND rails are free to use, and they are not pins.',
+      'You are given three resistors. The best known solution uses only two.'
+    ],
+    hints: [
+      'With two pins you cannot give each LED its own pin. A pin can be HIGH, LOW, or disconnected (`INPUT`), which is three states per pin.',
+      'One pin can drive two LEDs that face opposite ways: one from the pin to GND (lit when the pin is HIGH) and one from 5V to the pin (lit when the pin is LOW).',
+      'Put a resistor between each pin and its LEDs. Pin 2 drives two LEDs this way (HIGH, then LOW). The third LED goes from pin 3 to GND. While it is lit, set pin 2 to `INPUT` so neither of its LEDs conducts.'
+    ],
+    starter: 'function setup() {\n  \n}\n\nfunction loop() {\n  \n}\n',
+    tests: [
+      { name: 'LEDs take turns', duration: 2500, input: null,
+        check: function (H) {
+          if (H.ids.length < 3) return 'Place three LEDs.';
+          var u = H.used();
+          for (var i = 0; i < u.length; i++) if (u[i] !== 2 && u[i] !== 3) return 'Your firmware touched pin ' + u[i] + '. Only pins 2 and 3 are allowed.';
+          var seq = [];
+          for (var k = 0; k < 8; k++) {
+            var tm = 150 + 300 * k;
+            if (H.count(tm) !== 1) return 'Exactly one LED must be lit at t=' + tm + 'ms (found ' + H.count(tm) + ').';
+            seq.push(H.lit(tm));
+          }
+          if (seq[0] === seq[1] || seq[1] === seq[2] || seq[0] === seq[2]) return 'All three LEDs must take a turn before the pattern repeats.';
+          for (var j = 3; j < seq.length; j++) if (seq[j] !== seq[j - 3]) return 'The order must repeat every three steps (t=' + (150 + 300 * j) + 'ms).';
+          return null;
+        } },
+      { name: 'Switch timing', hidden: true, duration: 3800, input: null,
+        check: function (H) {
+          var u = H.used();
+          for (var i = 0; i < u.length; i++) if (u[i] !== 2 && u[i] !== 3) return 'x';
+          for (var k = 1; k < 12; k++) {
+            var e = 300 * k;
+            if (H.count(e - 15) !== 1 || H.count(e + 15) !== 1) return 'x';
+            if (H.lit(e - 15) === H.lit(e + 15)) return 'x';
+            if (H.lit(e - 150) !== H.lit(e - 15) || H.lit(e + 150) !== H.lit(e + 15)) return 'x';
+            if (k >= 3 && H.lit(e + 15) !== H.lit(e - 885)) return 'x';
+          }
+          return null;
+        } }
+    ]
+  },
+  {
+    id: 'short-long',
+    title: 'Short Press, Long Press',
+    difficulty: 'Hard',
+    ref: 4,
+    limits: { LED: 2, RES: 2, BTN: 1 },
+    statement: [
+      'One button, two LEDs. A **short press** (under 500 ms) toggles **LED1**. A **long press** (500 ms or more) toggles **LED2**. Decide when the button is **released**.',
+      'Each press must toggle exactly one LED, once. Pressing and releasing a bouncy button must not toggle anything extra.',
+      'The button bounces on both press **and** release, and the hidden tests use different bounce lengths. Read the button on pin `2`. Presses are never close to the 500 ms line, so you do not need to be exact.'
+    ],
+    hints: [
+      'The circuit is the same as *Binary Counter*: a button from **D2** to GND, two LEDs on two other pins.',
+      'Note `millis()` when you first see the button go down. When it comes back up, `millis() - startedAt` is how long it was held.',
+      'Wait about 40 ms after each edge so the bounce settles. On release, confirm the button is still released after the wait, then compare the duration with 500.'
+    ],
+    starter: 'function setup() {\n  \n}\n\nfunction loop() {\n  \n}\n',
+    tests: [
+      { name: 'Short toggles LED1, long toggles LED2', duration: 5600,
+        input: { windows: [[1000, 1200], [2000, 2900], [3500, 3650], [4200, 5000]], bounce: 10, seg: 2 },
+        check: function (H) {
+          if (!H.read(2)) return 'Your firmware never reads pin 2.';
+          if (H.ids.length < 2) return 'Place two LEDs.';
+          var exp = [[500, 0, 0], [1500, 1, 0], [3200, 1, 1], [3900, 0, 1], [5300, 0, 0]];
+          for (var i = 0; i < exp.length; i++) {
+            var a = H.on('LED1', exp[i][0]), b = H.on('LED2', exp[i][0]);
+            if (a !== !!exp[i][1] || b !== !!exp[i][2]) return 'At t=' + exp[i][0] + 'ms expected LED1 ' + (exp[i][1] ? 'ON' : 'OFF') + ' and LED2 ' + (exp[i][2] ? 'ON' : 'OFF') + '.';
+          }
+          return null;
+        } },
+      { name: 'Different bounce, mixed presses', hidden: true, duration: 5000,
+        input: { windows: [[400, 460], [1000, 1700], [2200, 2500], [3000, 3700], [4200, 4300]], bounce: 20, seg: 3 },
+        check: function (H) {
+          var exp = [[300, 0, 0], [800, 1, 0], [2000, 1, 1], [2900, 0, 1], [3950, 0, 0], [4700, 1, 0]];
+          for (var i = 0; i < exp.length; i++) {
+            if (H.on('LED1', exp[i][0]) !== !!exp[i][1] || H.on('LED2', exp[i][0]) !== !!exp[i][2]) return 'x';
+          }
+          return null;
+        } },
+      { name: 'Very long hold toggles once', hidden: true, duration: 4600,
+        input: { windows: [[500, 3500]], bounce: 8, seg: 2 },
+        check: function (H) {
+          if (H.on('LED1', 300) || H.on('LED2', 300)) return 'x';
+          if (H.on('LED1', 3800) || !H.on('LED2', 3800) || H.on('LED1', 4500) || !H.on('LED2', 4500)) return 'x';
+          return null;
+        } }
+    ]
+  },
+  {
+    id: 'charlie-six',
+    title: "Charlie's Six",
+    difficulty: 'Nearly Impossible',
+    ref: 9,
+    limits: { LED: 6, RES: 3, BTN: 1 },
+    statement: [
+      'Six LEDs, but the firmware may only use **pins 2, 3 and 4 for the LEDs**. The button goes on pin `5` (use `INPUT_PULLUP`).',
+      'Build a tiny display with three patterns. **A:** LED1, LED3 and LED5 lit at the same time (the rest dark). **B:** LED2, LED4 and LED6 lit. **C:** all six lit. The display starts on **A**, and each button press moves on to the next pattern: A, B, C, A, B, C...',
+      'The judge watches every LED over time. A lit LED must be on at least **12%** of the time and never dark for more than **12 ms** (steady to the eye). An LED that should be off may be on at most 3% of the time.',
+      'The display must keep refreshing while the button is held, bouncing or being debounced. A frozen display fails. Two resistors are enough, and three are allowed.'
+    ],
+    hints: [
+      'A pin can be HIGH, LOW, or disconnected (`INPUT`). With three pins that gives **six** distinct "one LED on" states, one for every ordered pair of pins. Put an LED between each pair of pins, in both directions.',
+      'Three LEDs lit "at the same time" means **multiplexing**: light one LED, `delay(1)`, light the next, and so on, over and over. Your eyes blend it into steady light. For pattern C, step through all six.',
+      'Two pins joined directly by an LED with no resistor in the path burns it, so at least two of the three pin nodes need a resistor. Read the button inside the scanning loop and debounce it with `millis()`. Never wait for the button with `delay()` or a `while` loop, or the display will flicker.'
+    ],
+    starter: 'function setup() {\n  \n}\n\nfunction loop() {\n  \n}\n',
+    tests: [
+      { name: 'Pattern A is steady', duration: 1000, input: null,
+        check: function (H) {
+          if (H.ids.length < 6) return 'Place all six LEDs.';
+          if (!H.read(5)) return 'Your firmware never reads pin 5 (the button).';
+          var u = H.used();
+          for (var i = 0; i < u.length; i++) if (u[i] < 2 || u[i] > 5) return 'Pin ' + u[i] + ' is not allowed. Use pins 2, 3, 4 for the LEDs and pin 5 for the button.';
+          var want = [1, 3, 5];
+          for (var k = 1; k <= 6; k++) {
+            var id = 'LED' + k, d = H.duty(id, 100, 1000);
+            if (want.indexOf(k) >= 0) {
+              if (d < 0.12) return id + ' should be lit but is on only ' + Math.round(d * 100) + '% of the time.';
+              if (H.gap(id, 100, 1000) > 12) return id + ' flickers: it is dark for ' + Math.round(H.gap(id, 100, 1000)) + ' ms at a stretch.';
+            } else if (d > 0.03) return id + ' should be dark but is on ' + Math.round(d * 100) + '% of the time.';
+          }
+          return null;
+        } },
+      { name: 'Button cycles A, B, C', duration: 4200,
+        input: { windows: [[1000, 1100], [2000, 2100], [3000, 3100]], bounce: 6, seg: 2 },
+        check: function (H) {
+          if (H.ids.length < 6) return 'Place all six LEDs.';
+          var plan = [['A', [1, 3, 5], 100, 900], ['B', [2, 4, 6], 1300, 1900], ['C', [1, 2, 3, 4, 5, 6], 2300, 2900], ['A', [1, 3, 5], 3300, 4100]];
+          for (var p = 0; p < plan.length; p++) {
+            for (var k = 1; k <= 6; k++) {
+              var id = 'LED' + k, d = H.duty(id, plan[p][2], plan[p][3]);
+              if (plan[p][1].indexOf(k) >= 0) {
+                if (d < 0.12) return 'Pattern ' + plan[p][0] + ': ' + id + ' should be lit but is on only ' + Math.round(d * 100) + '% of the time.';
+                if (H.gap(id, plan[p][2], plan[p][3]) > 12) return 'Pattern ' + plan[p][0] + ': ' + id + ' flickers (dark for ' + Math.round(H.gap(id, plan[p][2], plan[p][3])) + ' ms).';
+              } else if (d > 0.03) return 'Pattern ' + plan[p][0] + ': ' + id + ' should be dark but is on ' + Math.round(d * 100) + '% of the time.';
+            }
+          }
+          return null;
+        } },
+      { name: 'Display keeps running while held', hidden: true, duration: 3200,
+        input: { windows: [[500, 2500]], bounce: 8, seg: 2 },
+        check: function (H) {
+          var plan = [[[1, 3, 5], 100, 450], [[2, 4, 6], 700, 3100]];
+          for (var p = 0; p < plan.length; p++) {
+            for (var k = 1; k <= 6; k++) {
+              var id = 'LED' + k, d = H.duty(id, plan[p][1], plan[p][2]);
+              if (plan[p][0].indexOf(k) >= 0) { if (d < 0.12 || H.gap(id, plan[p][1], plan[p][2]) > 12) return 'x'; }
+              else if (d > 0.03) return 'x';
+            }
+          }
+          return null;
+        } },
+      { name: 'No flicker through a press', hidden: true, duration: 2000,
+        input: { windows: [[500, 560], [1000, 1060]], bounce: 10, seg: 3 },
+        check: function (H) {
+          var plan = [[[1, 3, 5], 100, 450], [[2, 4, 6], 700, 950], [[1, 2, 3, 4, 5, 6], 1300, 1900]];
+          for (var p = 0; p < plan.length; p++) {
+            for (var k = 1; k <= 6; k++) {
+              var id = 'LED' + k, d = H.duty(id, plan[p][1], plan[p][2]);
+              if (plan[p][0].indexOf(k) >= 0) { if (d < 0.12 || H.gap(id, plan[p][1], plan[p][2]) > 12) return 'x'; }
+              else if (d > 0.03) return 'x';
+            }
+          }
+          for (var q = 2; q <= 6; q += 2) if (H.gap('LED' + q, 700, 1950) > 12) return 'x';
+          return null;
+        } }
+    ]
+  },
+  /* ======================= new components: sensors, displays, actuators ======================= */
+  {
+    id: 'night-light',
+    title: 'Night Light',
+    difficulty: 'Easy',
+    ref: 4,
+    limits: { LDR: 1, RES: 2, LED: 1 },
+    statement: [
+      'Build a night light: the LED turns **on when the room is dark** and **off when it is bright**, reacting within 50 ms.',
+      'An Arduino cannot measure a resistance directly, so put the photoresistor (LDR) in a **voltage divider** with a 10 kΩ resistor and read the middle point with `analogRead(A0)`. With the LDR on the 5V side the reading is about 930 in full light and about 90 in full darkness.',
+      'Call it dark when the reading is **below 450**. The hidden tests stay well away from that line.'
+    ],
+    hints: [
+      'Divider: **5V → LDR → A0 → resistor → GND**. The LDR\'s resistance drops in the light, which pulls A0 up toward 5V.',
+      'The LED needs its own resistor and its own pin. Do not hang it on the A0 node: a lit LED loads the divider and corrupts the reading.',
+      'In `loop()`: `digitalWrite(ledPin, analogRead(A0) < 450 ? HIGH : LOW);` (after `pinMode(ledPin, OUTPUT)` in `setup()`).'
+    ],
+    starter: 'function setup() {\n  \n}\n\nfunction loop() {\n  \n}\n',
+    tests: [
+      { name: 'Dusk and dawn', duration: 4000, analog: { LDR1: [[0, 1], [1000, 0.1], [2000, 0.9], [3000, 0.2]] },
+        check: function (H) {
+          if (!H.read(14)) return 'Your firmware never calls analogRead(A0).';
+          if (H.ids.length < 1) return 'Place the LED.';
+          var exp = [[500, 0], [1060, 1], [1900, 1], [2060, 0], [2900, 0], [3060, 1], [3900, 1]];
+          for (var i = 0; i < exp.length; i++) if (H.anyOn(exp[i][0]) !== !!exp[i][1]) return 'At t=' + exp[i][0] + 'ms the LED should be ' + (exp[i][1] ? 'ON (dark)' : 'OFF (bright)') + '.';
+          return null;
+        } },
+      { name: 'Clouds passing', hidden: true, duration: 3000, analog: { LDR1: [[0, 0.55], [600, 0.35], [1200, 0.6], [1500, 0.05], [2400, 0.7]] },
+        check: function (H) {
+          var exp = [[400, 0], [700, 1], [1150, 1], [1260, 0], [1450, 0], [1560, 1], [2350, 1], [2460, 0], [2950, 0]];
+          for (var i = 0; i < exp.length; i++) if (H.anyOn(exp[i][0]) !== !!exp[i][1]) return 'x';
+          return null;
+        } }
+    ]
+  },
+  {
+    id: 'motion-lamp',
+    title: 'Motion Lamp',
+    difficulty: 'Easy',
+    ref: 3,
+    limits: { PIR: 1, LED: 1, RES: 1 },
+    statement: [
+      'A hallway lamp. The PIR motion sensor\'s output **O** goes HIGH while it sees motion. Read it on pin `7`.',
+      'The LED must light as soon as motion starts (within 30 ms) and **stay lit until 1 second after the motion stops**. New motion during that second keeps it lit.',
+      'Power the sensor from the board: **V** to 5V and **G** to GND. Wiring the sensor output straight to the LED will not pass.'
+    ],
+    hints: [
+      'Sensor: V → 5V, G → GND, O → D7. The LED and its resistor go on another pin, as in *Hello, LED*.',
+      'The sensor drives its output both HIGH and LOW, so `pinMode(7, INPUT)` is enough. No pull-up needed.',
+      'Remember `millis()` every time you see motion. In `loop()`, keep the LED on while `millis() - lastMotion < 1000`. A `delay(1000)` after each sighting is not the same thing: it can switch off early.'
+    ],
+    starter: 'function setup() {\n  \n}\n\nfunction loop() {\n  \n}\n',
+    tests: [
+      { name: 'Lights on motion, holds for 1 s', duration: 5000, inputs: { PIR1: { windows: [[500, 1500], [3000, 3200]] } },
+        check: function (H) {
+          if (!H.read(7)) return 'Your firmware never reads pin 7.';
+          var exp = [[300, 0], [530, 1], [1400, 1], [2400, 1], [2600, 0], [3030, 1], [4100, 1], [4300, 0]];
+          for (var i = 0; i < exp.length; i++) if (H.anyOn(exp[i][0]) !== !!exp[i][1]) return 'At t=' + exp[i][0] + 'ms the lamp should be ' + (exp[i][1] ? 'ON' : 'OFF') + '.';
+          return null;
+        } },
+      { name: 'Short bursts keep it on', hidden: true, duration: 3600, inputs: { PIR1: { windows: [[400, 600], [1200, 1300], [1900, 2000]] } },
+        check: function (H) {
+          var on = [430, 1000, 1250, 1500, 1800, 2500, 2950], off = [300, 3060, 3500];
+          for (var i = 0; i < on.length; i++) if (!H.anyOn(on[i])) return 'x';
+          for (var j = 0; j < off.length; j++) if (H.anyOn(off[j])) return 'x';
+          return null;
+        } }
+    ]
+  },
+  {
+    id: 'rgb-cycle',
+    title: 'Colour Wheel',
+    difficulty: 'Easy',
+    ref: 2,
+    limits: { RGB: 1, RES: 3 },
+    statement: [
+      'Cycle a common-cathode RGB LED through **red, green, blue**, 400 ms each, forever. Exactly one colour is lit at a time.',
+      'An RGB LED is three LEDs in one package that share a cathode **K**. Each colour pin (R, G, B) needs its own Arduino pin.',
+      'You get three resistors. Only one colour is ever lit, so think about where a single resistor could protect all three.'
+    ],
+    hints: [
+      'The simple version: each colour pin gets a resistor from its own Arduino pin, and K goes to GND.',
+      'Every colour\'s current flows out through the shared cathode, so one resistor between **K** and **GND** limits them all.',
+      'In `loop()`: R pin HIGH, others LOW, `delay(400)`; then G; then B.'
+    ],
+    starter: 'function setup() {\n  \n}\n\nfunction loop() {\n  \n}\n',
+    tests: [
+      { name: 'Red, green, blue', duration: 2600,
+        check: function (H) {
+          if (!H.has('RGB1')) return 'Place the RGB LED.';
+          var order = ['RGB1.R', 'RGB1.G', 'RGB1.B'], names = ['red', 'green', 'blue'];
+          for (var k = 0; k < 6; k++) {
+            var tm = 200 + 400 * k;
+            if (H.lit(tm) !== order[k % 3]) return 'At t=' + tm + 'ms only ' + names[k % 3] + ' should be lit (found: ' + H.lit(tm) + ').';
+          }
+          return null;
+        } },
+      { name: 'Switch timing', hidden: true, duration: 4000,
+        check: function (H) {
+          var order = ['RGB1.R', 'RGB1.G', 'RGB1.B'];
+          for (var k = 0; k < 9; k++) {
+            var s = 400 * k;
+            if (H.lit(s + 15) !== order[k % 3] || H.lit(s + 385) !== order[k % 3]) return 'x';
+          }
+          return null;
+        } }
+    ]
+  },
+  {
+    id: 'two-key',
+    title: 'Two-Key Launch',
+    difficulty: 'Easy',
+    ref: 4,
+    limits: { BTN: 2, LED: 1, RES: 1 },
+    statement: [
+      'A launch console needs **two keys turned together**. The LED lights only while **both** buttons are held, and goes dark as soon as either is released.',
+      'Read **BTN1 on pin 2** and **BTN2 on pin 3** in your firmware.'
+    ],
+    hints: [
+      'Each button goes from its pin to GND. Use `INPUT_PULLUP` on both pins, so a held button reads `LOW`.',
+      'Combine the readings with `&&`: both must be `LOW`.'
+    ],
+    starter: 'function setup() {\n  \n}\n\nfunction loop() {\n  \n}\n',
+    tests: [
+      { name: 'Both keys needed', duration: 4000,
+        inputs: { BTN1: { windows: [[500, 2500]] }, BTN2: { windows: [[1000, 1500], [2000, 3500]] } },
+        check: function (H) {
+          if (!H.read(2) || !H.read(3)) return 'Your firmware must read both pin 2 and pin 3.';
+          var exp = [[300, 0], [700, 0], [1200, 1], [1700, 0], [2200, 1], [2700, 0], [3700, 0]];
+          for (var i = 0; i < exp.length; i++) if (H.anyOn(exp[i][0]) !== !!exp[i][1]) return 'At t=' + exp[i][0] + 'ms the LED should be ' + (exp[i][1] ? 'ON (both held)' : 'OFF') + '.';
+          return null;
+        } },
+      { name: 'Quick overlaps', hidden: true, duration: 2000,
+        inputs: { BTN1: { windows: [[200, 260], [900, 1500]] }, BTN2: { windows: [[230, 400], [500, 1000], [1400, 1800]] } },
+        check: function (H) {
+          var exp = [[100, 0], [245, 1], [330, 0], [700, 0], [950, 1], [1200, 0], [1450, 1], [1600, 0]];
+          for (var i = 0; i < exp.length; i++) if (H.anyOn(exp[i][0]) !== !!exp[i][1]) return 'x';
+          return null;
+        } }
+    ]
+  },
+  {
+    id: 'dimmer',
+    title: 'Dimmer Switch',
+    difficulty: 'Medium',
+    ref: 4,
+    limits: { POT: 1, BTN: 1, LED: 1, RES: 1 },
+    statement: [
+      'A desk lamp with a knob and a power button. The knob (potentiometer) sets the brightness: knob at 0 = dark, fully turned = full brightness. Brightness is checked within ±3%.',
+      'The button **toggles the lamp on and off**. It starts **on**. While off the LED is dark whatever the knob says; when switched back on it follows the knob again. The button bounces a little.',
+      'Use `analogRead(A0)` (0–1023) for the knob and `analogWrite(pin, 0..255)` for brightness. PWM only works on pins **3, 5, 6, 9, 10, 11**. Read the button on pin `2`.'
+    ],
+    hints: [
+      'Potentiometer: pin **1 → GND**, pin **2 → 5V**, wiper **W → A0**. Swap 1 and 2 and the knob works backwards.',
+      'The reading is 0–1023 and PWM takes 0–255, so divide by 4. Put the LED and its resistor on a PWM pin.',
+      'Toggle `on = !on` only when the button goes from released to pressed, then `delay(30)` to ride out the bounce. Each loop: `analogWrite(led, on ? analogRead(A0) / 4 : 0)`.'
+    ],
+    starter: 'function setup() {\n  \n}\n\nfunction loop() {\n  \n}\n',
+    tests: [
+      { name: 'Follows the knob, button toggles', duration: 4200,
+        analog: { POT1: [[0, 0.25], [700, 0.5], [1400, 1], [2100, 0.75], [3200, 0.1]] },
+        input: { windows: [[2500, 2600], [3500, 3600]], bounce: 6, seg: 2 },
+        check: function (H) {
+          if (!H.read(14)) return 'Your firmware never calls analogRead(A0).';
+          if (!H.read(2)) return 'Your firmware never reads the button on pin 2.';
+          if (H.ids.length < 1) return 'Place the LED.';
+          var exp = [[400, 0.25], [1000, 0.5], [1800, 1], [2300, 0.75], [2900, 0], [3300, 0], [3900, 0.1]];
+          for (var i = 0; i < exp.length; i++) {
+            var lv = H.level(H.ids[0], exp[i][0]);
+            if (Math.abs(lv - exp[i][1]) > 0.03) return 'At t=' + exp[i][0] + 'ms the LED should be at ' + Math.round(exp[i][1] * 100) + '% brightness but is at ' + Math.round(lv * 100) + '%.';
+          }
+          return null;
+        } },
+      { name: 'Fast knob, bouncy taps', hidden: true, duration: 3000,
+        analog: { POT1: [[0, 0.6], [300, 0.05], [600, 0.9], [900, 0.4], [1200, 0], [1500, 0.3], [2400, 0.8]] },
+        input: { windows: [[1600, 1660], [2000, 2050], [2600, 2900]], bounce: 10, seg: 3 },
+        check: function (H) {
+          var id = H.ids[0];
+          var exp = [[150, 0.6], [330, 0.05], [630, 0.9], [930, 0.4], [1230, 0], [1550, 0.3], [1900, 0], [2300, 0.3], [2450, 0.8], [2950, 0]];
+          for (var i = 0; i < exp.length; i++) if (Math.abs(H.level(id, exp[i][0]) - exp[i][1]) > 0.03) return 'x';
+          return null;
+        } }
+    ]
+  },
+  {
+    id: 'countdown',
+    title: 'Launch Countdown',
+    difficulty: 'Medium',
+    ref: 3,
+    limits: { SEG: 1, BTN: 1, RES: 8 },
+    statement: [
+      'A single-digit countdown on a common-cathode **7-segment display**. The display is blank until the button (pin `2`) is pressed.',
+      'On a press it shows **9** right away (within 30 ms), then **8, 7, … 0**, each for 400 ms. After 0 has been shown for 400 ms the display goes blank again and waits for the next press.',
+      'Presses during a countdown are ignored. Segments are named a (top) clockwise to f, with g in the middle. Every lit segment needs current limiting, but you are handed eight resistors only as a courtesy.'
+    ],
+    hints: [
+      'Wire segments a–g to seven pins (say 3–9) and the common cathode K to GND through **one** resistor: every segment\'s current leaves through K.',
+      'Keep a table of which segments make each digit, e.g. `var D = [0b0111111, 0b0000110, ...]` with bit 0 = a … bit 6 = g, and a `show(n)` function that writes the seven bits.',
+      'In `loop()`, wait for `digitalRead(2) === LOW`, then `for (n = 9; n >= 0; n--) { show(n); delay(400); }`, then blank. Presses during the `for` are naturally ignored.'
+    ],
+    starter: 'function setup() {\n  \n}\n\nfunction loop() {\n  \n}\n',
+    tests: [
+      { name: 'Counts down from 9', duration: 5200, input: { windows: [[500, 600]] },
+        check: function (H) {
+          if (!H.has('SEG1')) return 'Place the 7-segment display.';
+          if (!H.read(2)) return 'Your firmware never reads pin 2.';
+          if (H.digit('SEG1', 300) !== ' ') return 'The display should be blank before the press (shows "' + H.digit('SEG1', 300) + '").';
+          for (var k = 0; k < 10; k++) {
+            var tm = 500 + 400 * k + 200, want = String(9 - k), got = H.digit('SEG1', tm);
+            if (got !== want) return 'At t=' + tm + 'ms the display should show ' + want + ' but shows "' + got + '".';
+          }
+          if (H.digit('SEG1', 4700) !== ' ') return 'The display should be blank after the countdown (t=4700ms).';
+          return null;
+        } },
+      { name: 'Taps, presses during a countdown', hidden: true, duration: 9600, input: { windows: [[300, 330], [1500, 1700], [4600, 4700], [5000, 5040]] },
+        check: function (H) {
+          var starts = [300, 4600];
+          for (var s = 0; s < 2; s++) for (var k = 0; k < 10; k++) {
+            var b = starts[s] + 400 * k;
+            if (H.digit('SEG1', b + 30) !== String(9 - k) || H.digit('SEG1', b + 370) !== String(9 - k)) return 'x';
+          }
+          if (H.digit('SEG1', 4450) !== ' ' || H.digit('SEG1', 8800) !== ' ') return 'x';
+          return null;
+        } }
+    ]
+  },
+  {
+    id: 'toll-gate',
+    title: 'Toll Gate',
+    difficulty: 'Medium',
+    ref: 5,
+    limits: { BTN: 1, SRV: 1, LED: 2, RES: 2 },
+    statement: [
+      'A car park barrier. A servo is the arm: **0° = closed, 90° = open**. **LED1 is red**, **LED2 is green**.',
+      'At rest the arm is closed and red is lit. When the ticket button (pin `2`) is pressed the arm opens and green replaces red within 30 ms. The arm stays open while the button is held and **closes 2 s after it is released**, when red comes back.',
+      'The servo needs power: **V** to 5V, **G** to GND, **S** to the pin you `attach()`. Use the `Servo` object: `var arm = new Servo(); arm.attach(9); arm.write(90);`.'
+    ],
+    hints: [
+      'Red and green are never lit together, so the two LEDs can share a single resistor to GND.',
+      'Do not `delay(2000)` after the press: a second car pressing during those 2 s must keep the arm up. Instead remember `millis()` whenever the button reads pressed.',
+      'Each loop: `open = millis() - lastPressed < 2000`; write 90 or 0 to the servo and set the LEDs to match. Start with `lastPressed = -10000` so the gate begins closed.'
+    ],
+    starter: 'var arm = new Servo();\n\nfunction setup() {\n  \n}\n\nfunction loop() {\n  \n}\n',
+    tests: [
+      { name: 'Opens, holds, closes', duration: 6500, input: { windows: [[1000, 1200], [4500, 5000]], bounce: 5, seg: 2 },
+        check: function (H) {
+          if (H.angle('SRV1', 500) === null) return 'The servo has no position. Is it powered (V→5V, G→GND) and is S wired to the pin you attach()?';
+          if (!H.read(2)) return 'Your firmware never reads pin 2.';
+          var exp = [[500, 0], [1030, 90], [2000, 90], [3150, 90], [3260, 0], [4400, 0], [4530, 90], [6400, 90]];
+          for (var i = 0; i < exp.length; i++) {
+            var a = H.angle('SRV1', exp[i][0]);
+            if (a !== exp[i][1]) return 'At t=' + exp[i][0] + 'ms the arm should be at ' + exp[i][1] + '° but is at ' + a + '°.';
+            var open = exp[i][1] === 90;
+            if (H.on('LED1', exp[i][0]) === open || H.on('LED2', exp[i][0]) !== open) return 'At t=' + exp[i][0] + 'ms the ' + (open ? 'green LED (LED2)' : 'red LED (LED1)') + ' should be the only one lit.';
+          }
+          return null;
+        } },
+      { name: 'Second car keeps it open', hidden: true, duration: 6000, input: { windows: [[300, 350], [1800, 1850], [3200, 3800]], bounce: 8, seg: 2 },
+        check: function (H) {
+          var exp = [[200, 0], [330, 90], [2300, 90], [3700, 90], [3850, 90], [5700, 90], [5900, 0]];
+          for (var i = 0; i < exp.length; i++) {
+            var open = exp[i][1] === 90;
+            if (H.angle('SRV1', exp[i][0]) !== exp[i][1] || H.on('LED1', exp[i][0]) === open || H.on('LED2', exp[i][0]) !== open) return 'x';
+          }
+          return null;
+        } }
+    ]
+  },
+  {
+    id: 'light-meter',
+    title: 'Light Meter',
+    difficulty: 'Medium',
+    ref: 4,
+    limits: { LDR: 1, RES: 2, SEG: 1 },
+    statement: [
+      'Show the light level as a single digit on a 7-segment display: **digit = reading × 10 ÷ 1024, rounded down**, where reading is `analogRead(A0)` of an LDR divider with the LDR on the **5V side**.',
+      'The display must update within 60 ms of a change and must never show a garbled pattern in between for longer than that.',
+      'The divider and the display each need a resistor. They cannot share one: a lit segment hanging on the A0 node drags the reading.'
+    ],
+    hints: [
+      'Divider: 5V → LDR → A0 → resistor → GND. Display: segments a–g on seven pins, K → resistor → GND.',
+      'Integer maths: `Math.floor(analogRead(A0) * 10 / 1024)`.',
+      'Reuse your digit table from *Launch Countdown*. Read and redraw every 10–20 ms in `loop()`.'
+    ],
+    starter: 'function setup() {\n  \n}\n\nfunction loop() {\n  \n}\n',
+    tests: [
+      { name: 'Sunrise', duration: 4200, analog: { LDR1: [[0, 0.12], [500, 0.26], [1000, 0.37], [1500, 0.46], [2000, 0.54], [2500, 0.64], [3000, 0.74], [3500, 0.88]] },
+        check: function (H) {
+          if (!H.has('SEG1')) return 'Place the 7-segment display.';
+          if (!H.read(14)) return 'Your firmware never calls analogRead(A0).';
+          for (var k = 0; k < 8; k++) {
+            var tm = 500 * k + 250, got = H.digit('SEG1', tm), want = String(k + 1);
+            if (got !== want) return 'At t=' + tm + 'ms the display should show ' + want + ' but shows "' + got + '".';
+          }
+          return null;
+        } },
+      { name: 'Flickering light', hidden: true, duration: 2400, analog: { LDR1: [[0, 0.87], [300, 0.11], [600, 0.63], [900, 0.36], [1200, 0.74], [1500, 0.25], [1800, 0.55]] },
+        check: function (H) {
+          var want = ['8', '1', '6', '3', '7', '2', '5'];
+          for (var k = 0; k < want.length; k++) {
+            var s = 300 * k;
+            if (H.shown('SEG1', s + 60, s + 300) !== want[k]) return 'x';
+          }
+          return null;
+        } }
+    ]
+  },
+  {
+    id: 'porch-light',
+    title: 'Porch Light',
+    difficulty: 'Hard',
+    ref: 5,
+    limits: { PIR: 1, LDR: 1, LED: 1, RES: 2 },
+    statement: [
+      'A porch light with a motion sensor and a light sensor. **Motion seen while it is dark** turns the lamp on (within 50 ms). The lamp stays on until **3 s after the last motion**. Motion seen in daylight is ignored.',
+      'Daylight switches the lamp off, but **car headlights must not**: it only counts as daylight once it has been bright for **300 ms in a row** (switch off within 350 ms of the light arriving). Dark = `analogRead(A0)` below 450, with the LDR on the 5V side of the divider.',
+      'The PIR output **O** goes HIGH during motion; power it from 5V and GND. Read it on pin `7`.'
+    ],
+    hints: [
+      'Two sensors, two kinds of reading: `digitalRead(7)` for motion, `analogRead(A0)` for light. The LED and the divider each need their own resistor.',
+      'Track `brightSince`: reset it to `millis()` whenever the reading is dark. `day = millis() - brightSince >= 300` is your debounced daylight flag.',
+      'If motion and the raw reading is dark, set `lastMotion = millis()`. The lamp is on when `!day && millis() - lastMotion < 3000`. Start `lastMotion` far in the past.'
+    ],
+    starter: 'function setup() {\n  \n}\n\nfunction loop() {\n  \n}\n',
+    tests: [
+      { name: 'A night on the porch', duration: 9000,
+        inputs: { PIR1: { windows: [[300, 500], [2000, 2200], [4000, 4100], [6000, 8500]] } },
+        analog: { LDR1: [[0, 1], [1000, 0.1], [5000, 0.95], [5150, 0.1], [7000, 0.95]] },
+        check: function (H) {
+          if (!H.read(7)) return 'Your firmware never reads the motion sensor on pin 7.';
+          if (!H.read(14)) return 'Your firmware never calls analogRead(A0).';
+          var exp = [[400, 0, 'motion in daylight is ignored'], [1500, 0, 'dark, but no motion yet'], [2050, 1, 'motion in the dark'],
+            [3500, 1, 'within 3 s of motion'], [5075, 1, 'headlights (150 ms) must not switch it off'], [6500, 1, 'motion again'],
+            [7200, 1, 'bright for only 200 ms'], [7380, 0, 'bright for 380 ms: daylight'], [8300, 0, 'motion in daylight is ignored'], [8950, 0, 'daylight']];
+          for (var i = 0; i < exp.length; i++) if (H.anyOn(exp[i][0]) !== !!exp[i][1]) return 'At t=' + exp[i][0] + 'ms the lamp should be ' + (exp[i][1] ? 'ON' : 'OFF') + ' (' + exp[i][2] + ').';
+          return null;
+        } },
+      { name: 'Hold time', hidden: true, duration: 9500,
+        inputs: { PIR1: { windows: [[500, 700], [2500, 2600], [6000, 6100]] } },
+        analog: { LDR1: [[0, 0.15]] },
+        check: function (H) {
+          var exp = [[400, 0], [550, 1], [5500, 1], [5700, 0], [5950, 0], [6050, 1], [9000, 1], [9200, 0]];
+          for (var i = 0; i < exp.length; i++) if (H.anyOn(exp[i][0]) !== !!exp[i][1]) return 'x';
+          return null;
+        } },
+      { name: 'Dusk falls during motion', hidden: true, duration: 6000,
+        inputs: { PIR1: { windows: [[1000, 2500]] } },
+        analog: { LDR1: [[0, 0.9], [1500, 0.1], [5700, 0.9]] },
+        check: function (H) {
+          var exp = [[1400, 0], [1560, 1], [5400, 1], [5600, 0], [5950, 0]];
+          for (var i = 0; i < exp.length; i++) if (H.anyOn(exp[i][0]) !== !!exp[i][1]) return 'x';
+          return null;
+        } }
+    ]
+  },
+  {
+    id: 'color-mixer',
+    title: 'Colour Mixer',
+    difficulty: 'Hard',
+    ref: 4,
+    limits: { POT: 1, BTN: 1, RGB: 1, RES: 3 },
+    statement: [
+      'Mix any colour with one knob and one button. One channel of the RGB LED is **selected** at a time, starting with red. The selected channel\'s brightness follows the knob live (knob/4 → PWM, ±3%); the other two keep whatever value they had.',
+      'A **short press** (under 1 s) selects the next channel: R → G → B → R. A **long press** (1 s or more) resets: all channels go to 0 and red is selected again. Act when the button is **released**. The button bounces on press and release.',
+      'All three colour pins need PWM (3, 5, 6, 9, 10, 11). Knob: pin 1 → GND, pin 2 → 5V, W → A0. Read the button on pin `2`.'
+    ],
+    hints: [
+      'Keep `val = [0, 0, 0]` and `sel = 0`. Every loop, `val[sel] = analogRead(A0) / 4`, then `analogWrite` all three channels.',
+      'The three channels share the cathode, so one resistor from K to GND covers them all.',
+      'Debounce: note `millis()` when the button goes down, wait ~30 ms after each edge, and on the release compare the hold time with 1000. Never block with `delay()` for long, or the knob stops tracking.'
+    ],
+    starter: 'function setup() {\n  \n}\n\nfunction loop() {\n  \n}\n',
+    tests: [
+      { name: 'Mix, select, reset', duration: 7200,
+        analog: { POT1: [[0, 0.8], [1500, 0.4], [3500, 0.6], [5500, 0.3]] },
+        input: { windows: [[1000, 1100], [3000, 3100], [5000, 6300]], bounce: 8, seg: 2 },
+        check: function (H) {
+          if (!H.has('RGB1')) return 'Place the RGB LED.';
+          if (!H.read(14)) return 'Your firmware never calls analogRead(A0).';
+          var exp = [[600, [0.8, 0, 0]], [1300, [0.8, 0.8, 0]], [2500, [0.8, 0.4, 0]], [3300, [0.8, 0.4, 0.4]], [4500, [0.8, 0.4, 0.6]], [6700, [0.3, 0, 0]]];
+          var ch = ['R', 'G', 'B'];
+          for (var i = 0; i < exp.length; i++) for (var c = 0; c < 3; c++) {
+            var lv = H.level('RGB1.' + ch[c], exp[i][0]);
+            if (Math.abs(lv - exp[i][1][c]) > 0.03) return 'At t=' + exp[i][0] + 'ms channel ' + ch[c] + ' should be at ' + Math.round(exp[i][1][c] * 100) + '% but is at ' + Math.round(lv * 100) + '%.';
+          }
+          return null;
+        } },
+      { name: 'Full cycle and quick taps', hidden: true, duration: 6000,
+        analog: { POT1: [[0, 0.2], [400, 0.9], [900, 0.5], [1600, 0.7], [2300, 0.1], [3000, 1], [4500, 0.45]] },
+        input: { windows: [[700, 760], [1300, 1360], [2000, 2050], [2600, 2650], [3800, 4900]], bounce: 12, seg: 3 },
+        check: function (H) {
+          var exp = [[300, [0.2, 0, 0]], [600, [0.9, 0, 0]], [1100, [0.9, 0.5, 0]], [1800, [0.9, 0.5, 0.7]], [2200, [0.7, 0.5, 0.7]], [2450, [0.1, 0.5, 0.7]],
+            [2800, [0.1, 0.1, 0.7]], [3300, [0.1, 1, 0.7]], [5200, [0.45, 0, 0]]];
+          var ch = ['R', 'G', 'B'];
+          for (var i = 0; i < exp.length; i++) for (var c = 0; c < 3; c++) if (Math.abs(H.level('RGB1.' + ch[c], exp[i][0]) - exp[i][1][c]) > 0.03) return 'x';
+          return null;
+        } }
+    ]
+  },
+  {
+    id: 'safe-lock',
+    title: 'Combination Safe',
+    difficulty: 'Hard',
+    ref: 5,
+    limits: { BTN: 2, SRV: 1, BUZ: 1, RES: 1 },
+    statement: [
+      'A safe with two keys, **A = BTN1** and **B = BTN2**. The code is **A A B A**. The bolt is a servo: **0° locked, 90° unlocked**; it must read 0° from the start.',
+      'After every **four** key presses the safe checks the code. Right: the bolt opens within 50 ms of the 4th press, stays open **3 s**, then locks. Wrong: the buzzer sounds for **500 ms** (starting within 50 ms) and the entry starts over. Presses while open or buzzing are ignored and do not count.',
+      'Both keys bounce on press and release. Each physical press must count exactly once.'
+    ],
+    hints: [
+      'Wire each button from its own pin to GND (`INPUT_PULLUP`), the servo to 5V/GND plus a signal pin, the buzzer through the resistor.',
+      'Write a small edge detector you can call for both keys: it remembers the last stable reading and reports a press when the pin goes LOW and is still LOW 20–30 ms later.',
+      'Collect presses into a string (`entry += "A"`). When `entry.length === 4`, compare with `"AABA"`. A `delay(3000)` while unlocked is fine here, but afterwards resynchronise your edge detectors so a key held during the wait does not count.'
+    ],
+    starter: 'var bolt = new Servo();\n\nfunction setup() {\n  \n}\n\nfunction loop() {\n  \n}\n',
+    tests: [
+      { name: 'Right code, then a wrong one', duration: 7200,
+        inputs: { BTN1: { windows: [[500, 600], [900, 1000], [1700, 1800], [5200, 5300], [6100, 6200]], bounce: 6, seg: 2 },
+          BTN2: { windows: [[1300, 1400], [5500, 5600], [5800, 5900]], bounce: 6, seg: 2 } },
+        check: function (H) {
+          if (H.angle('SRV1', 300) !== 0) return 'The bolt should be locked (0°) at the start. Is the servo powered and attached?';
+          var ang = [[1650, 0, 'only three keys so far'], [1750, 90, 'A A B A entered'], [4650, 90, 'open for 3 s'], [4800, 0, 'locks again after 3 s'], [6400, 0, 'wrong code stays locked']];
+          for (var i = 0; i < ang.length; i++) if (H.angle('SRV1', ang[i][0]) !== ang[i][1]) return 'At t=' + ang[i][0] + 'ms the bolt should be at ' + ang[i][1] + '° (' + ang[i][2] + ').';
+          var bz = [[1800, 0], [5000, 0], [6000, 0], [6150, 1], [6550, 1], [6700, 0]];
+          for (var j = 0; j < bz.length; j++) if (H.anyOn(bz[j][0]) !== !!bz[j][1]) return 'At t=' + bz[j][0] + 'ms the buzzer should be ' + (bz[j][1] ? 'sounding (wrong code A B B A)' : 'silent') + '.';
+          return null;
+        } },
+      { name: 'Wrong, then right; presses while open ignored', hidden: true, duration: 7600,
+        inputs: { BTN1: { windows: [[200, 260], [800, 860], [1700, 1750], [2000, 2050], [2600, 2650], [3000, 3060], [3300, 3360]], bounce: 10, seg: 3 },
+          BTN2: { windows: [[500, 560], [1100, 1160], [2300, 2350], [3600, 3660]], bounce: 10, seg: 3 } },
+        check: function (H) {
+          var bz = [[1050, 0], [1170, 1], [1550, 1], [1700, 0], [2700, 0], [6000, 0]];
+          for (var j = 0; j < bz.length; j++) if (H.anyOn(bz[j][0]) !== !!bz[j][1]) return 'x';
+          var ang = [[2550, 0], [2700, 90], [5500, 90], [5700, 0], [7500, 0]];
+          for (var i = 0; i < ang.length; i++) if (H.angle('SRV1', ang[i][0]) !== ang[i][1]) return 'x';
+          return null;
+        } },
+      { name: 'Long holds count once', hidden: true, duration: 6000,
+        inputs: { BTN1: { windows: [[300, 1200], [1500, 1600], [2800, 3500]], bounce: 15, seg: 2 },
+          BTN2: { windows: [[2000, 2600]], bounce: 15, seg: 2 } },
+        check: function (H) {
+          if (H.anyOn(2900) || H.angle('SRV1', 2750) !== 0 || H.angle('SRV1', 2900) !== 90 || H.angle('SRV1', 5700) !== 90 || H.angle('SRV1', 5900) !== 0) return 'x';
+          return null;
+        } }
+    ]
+  },
+  {
+    id: 'bar-graph',
+    title: 'Shift-Register Bar Graph',
+    difficulty: 'Hard',
+    ref: 11,
+    limits: { SR: 1, LED: 8, RES: 8, POT: 1 },
+    statement: [
+      'Turn a knob into an 8-LED bar graph: **n = reading × 9 ÷ 1024, rounded down** (0–8), and LED1 … LEDn are lit, the rest dark. Update within 50 ms.',
+      'You may only use **three digital pins** (plus A0 for the knob), so drive the LEDs from a **74HC595 shift register**: each rising edge on **SH** (shift clock) pushes the level on **DS** in at Q0 and moves everything up one place; a rising edge on **ST** (latch) copies the shifted bits to the outputs **Q0–Q7**. Wire **LEDk to Qk−1**.',
+      'Power the chip: VCC → 5V, GND → GND. Eight resistors are provided; far fewer are needed if you think about where the current goes.'
+    ],
+    hints: [
+      'DS, SH and ST go to three pins. Each LED anode goes to its Q output; the cathodes can all join and reach GND through **one** resistor.',
+      '`shiftOut(dataPin, clockPin, MSBFIRST, value)` clocks out eight bits, highest first, so after it bit 7 is on Q7 and bit 0 on Q0. Then pulse ST: LOW, HIGH, LOW.',
+      'The pattern for n lit LEDs is `(1 << n) - 1`. Only re-send it when n changes, or every 20 ms or so.'
+    ],
+    starter: 'function setup() {\n  \n}\n\nfunction loop() {\n  \n}\n',
+    tests: [
+      { name: 'Turning the knob', duration: 3200, analog: { POT1: [[0, 0.055], [400, 0.389], [800, 0.94], [1200, 0.611], [1600, 0.167], [2000, 0.5], [2400, 0.278], [2800, 0.833]] },
+        check: function (H) {
+          if (H.ids.length < 8) return 'Place all eight LEDs.';
+          var u = H.used().filter(function (p) { return p < 14; });
+          if (u.length > 3) return 'Your firmware uses ' + u.length + ' digital pins (' + u.join(', ') + '). Only three are allowed.';
+          var want = [0, 3, 8, 5, 1, 4, 2, 7];
+          for (var k = 0; k < want.length; k++) {
+            var tm = 400 * k + 200;
+            for (var j = 1; j <= 8; j++) if (H.on('LED' + j, tm) !== (j <= want[k])) return 'At t=' + tm + 'ms the bar should show ' + want[k] + ' LED' + (want[k] === 1 ? '' : 's') + ' (LED1..LED' + want[k] + '), but LED' + j + ' is ' + (H.on('LED' + j, tm) ? 'on' : 'off') + '.';
+          }
+          return null;
+        } },
+      { name: 'Fast sweep', hidden: true, duration: 2000, analog: { POT1: [[0, 0.94], [200, 0.722], [400, 0.5], [600, 0.278], [800, 0.055], [1000, 0.389], [1200, 0.833], [1400, 0.167], [1600, 0.611]] },
+        check: function (H) {
+          var u = H.used().filter(function (p) { return p < 14; });
+          if (u.length > 3) return 'x';
+          var want = [8, 6, 4, 2, 0, 3, 7, 1, 5];
+          for (var k = 0; k < want.length; k++) for (var j = 1; j <= 8; j++) {
+            if (H.on('LED' + j, 200 * k + 60) !== (j <= want[k]) || H.on('LED' + j, 200 * k + 195) !== (j <= want[k])) return 'x';
+          }
+          return null;
+        } }
+    ]
+  },
+  {
+    id: 'scoreboard',
+    title: 'Two-Digit Scoreboard',
+    difficulty: 'Nearly Impossible',
+    ref: 6,
+    limits: { SEG: 2, BTN: 2, RES: 9 },
+    statement: [
+      'A scoreboard from **00** to **99** on two 7-segment displays: **SEG1 is tens, SEG2 is ones**, leading zero shown. **BTN1 adds a point**, **BTN2 resets to 00**. After 99 comes 00.',
+      'There are not enough pins for 14 segments. Join the two displays\' a–g lines together and **multiplex**: light one digit for ~1 ms, then the other, by switching their common cathodes. The judge watches every segment: a lit segment must be on at least **12%** of the time and never dark for more than **12 ms**; a dark segment may be on at most 3%.',
+      'Both buttons bounce. The display must keep refreshing through every press, hold and bounce, and each press must count once. Use any pins for the buttons.'
+    ],
+    hints: [
+      'Seven pins drive a–g on both displays. Each display\'s K goes to its own pin **through a resistor**. A digit is lit when its K pin is LOW; park the other K pin HIGH so its LEDs are reverse-biased and dark.',
+      'Scan loop: all K HIGH, write tens\' segments, tens K LOW, `delay(1)`; all K HIGH, write ones\' segments, ones K LOW, `delay(1)`. Blank the cathodes **before** changing the segments, or you get ghosting.',
+      'Debounce both buttons with `millis()` inside the scan loop: a press counts when the reading has been LOW for 20 ms after being HIGH. Never wait for a button with `while` or a long `delay()`.'
+    ],
+    starter: 'function setup() {\n  \n}\n\nfunction loop() {\n  \n}\n',
+    tests: [
+      { name: 'Score and reset', duration: 3600,
+        inputs: { BTN1: { windows: [[500, 600], [900, 1000], [1300, 1700]], bounce: 6, seg: 2 }, BTN2: { windows: [[2400, 2500]], bounce: 6, seg: 2 } },
+        check: function (H) {
+          if (!H.has('SEG1') || !H.has('SEG2')) return 'Place both displays.';
+          var plan = [[100, 450, '00'], [650, 850, '01'], [1050, 1250, '02'], [1350, 1650, '03'], [1800, 2350, '03'], [2600, 3500, '00']];
+          for (var i = 0; i < plan.length; i++) {
+            var a = H.shown('SEG1', plan[i][0], plan[i][1]), b = H.shown('SEG2', plan[i][0], plan[i][1]);
+            if (a + b !== plan[i][2]) return 'Between t=' + plan[i][0] + ' and ' + plan[i][1] + 'ms the board should steadily show ' + plan[i][2] + ' but shows "' + a + b + '" (~ means flickering or dim, ? means a garbled digit).';
+          }
+          return null;
+        } },
+      { name: 'Into double digits', hidden: true, duration: 4300,
+        inputs: { BTN1: { windows: [[200, 260], [400, 460], [600, 660], [800, 860], [1000, 1060], [1200, 1260], [1400, 1460], [1600, 1660], [1800, 1860], [2000, 2060], [2200, 2260], [2400, 2460], [2600, 3600]], bounce: 10, seg: 3 } },
+        check: function (H) {
+          var plan = [[100, 190, '00'], [1500, 1590, '07'], [2100, 2190, '10'], [2500, 2590, '12'], [2700, 4200, '13']];
+          for (var i = 0; i < plan.length; i++) if (H.shown('SEG1', plan[i][0], plan[i][1]) + H.shown('SEG2', plan[i][0], plan[i][1]) !== plan[i][2]) return 'x';
+          return null;
+        } },
+      { name: 'Reset while scoring', hidden: true, duration: 2400,
+        inputs: { BTN1: { windows: [[300, 380], [700, 1500]], bounce: 15, seg: 2 }, BTN2: { windows: [[1000, 1100], [1800, 1850]], bounce: 15, seg: 2 } },
+        check: function (H) {
+          var plan = [[100, 290, '00'], [450, 680, '01'], [760, 990, '02'], [1150, 1780, '00'], [1900, 2350, '00']];
+          for (var i = 0; i < plan.length; i++) if (H.shown('SEG1', plan[i][0], plan[i][1]) + H.shown('SEG2', plan[i][0], plan[i][1]) !== plan[i][2]) return 'x';
+          return null;
+        } }
+    ]
+  }
+];
+
+// keep the list sorted by difficulty (stable)
+var DIFF_ORDER = { 'Easy': 0, 'Medium': 1, 'Hard': 2, 'Nearly Impossible': 3 };
+PROBLEMS = PROBLEMS.map(function (p, i) { return { p: p, i: i }; }).sort(function (a, b) { return DIFF_ORDER[a.p.difficulty] - DIFF_ORDER[b.p.difficulty] || a.i - b.i; }).map(function (x) { return x.p; });
+
+if (typeof module !== 'undefined') module.exports = { PROBLEMS: PROBLEMS };
+
+;
+'use strict';
+(function () {
+  var app = document.getElementById('app');
+
+  /* ---------- helpers ---------- */
+  var store = {
+    get: function (k, d) { try { var v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
+    set: function (k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  };
+  function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function md(s) { return esc(s).replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>').replace(/\*([^*]+)\*/g, '<i>$1</i>'); }
+  function dcls(d) { return String(d).replace(/\s+/g, ''); }
+  function stars(n) { var s = ''; for (var i = 1; i <= 3; i++) s += i <= n ? '★' : '<span class="off">★</span>'; return '<span class="stars">' + s + '</span>'; }
+  var IS_MAC = /Mac|iPhone|iPad/.test(navigator.platform || '');
+  var MOD = IS_MAC ? '⌘' : 'Ctrl';
+
+  var VERDICT_HELP = {
+    'Accepted': 'All tests passed. Nice work!',
+    'Wrong Answer': 'Your circuit and code ran, but the behaviour did not match what the problem asks. Check the failing test below.',
+    'Invalid Circuit': 'You used more parts than the problem allows. Delete some parts and try again.',
+    'Compile Error': 'Your firmware has a syntax mistake. Check brackets, commas and spelling.',
+    'Runtime Error': 'Your firmware crashed while running. Read the message below.',
+    'Time Limit Exceeded': 'Your firmware never gave control back. A loop without delay() is a common cause.'
+  };
+
+  /* ---------- submissions ---------- */
+  function userKey(u) { u = u || getUser(); var k = (u.github || u.name || '').trim().toLowerCase(); return k || 'guest'; }
+  function allSubs() { return store.get('cc.subs', []); }
+  function mySubs() { var k = userKey(); return allSubs().filter(function (s) { return (s.user || 'guest') === k; }); }
+  function bestFor(pid) {
+    var best = null;
+    mySubs().forEach(function (s) {
+      if (s.pid === pid && s.verdict === 'Accepted' &&
+        (!best || s.score > best.score || (s.score === best.score && (s.time || 1e12) < (best.time || 1e12)))) best = s;
+    });
+    return best;
+  }
+  function fmtTime(ms) {
+    var s = Math.max(0, Math.floor(ms / 1000)), h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), x = s % 60;
+    function p(n) { return (n < 10 ? '0' : '') + n; }
+    return (h ? h + ':' + p(m) : p(m)) + ':' + p(x);
+  }
+
+  /* ---------- part definitions & geometry ---------- */
+  // pins: offsets from the part centre; box: selection/drag area [x, y, w, h];
+  // lo: label offset per pin [dx, dy, anchor] (default: centred under the pin); opt: pins that may stay unwired
+  var L_LEFT = [-12, 4, 'end'], L_RIGHT = [12, 4, 'start'];
+  var PART_DEFS = {
+    LED: { label: 'LED', pins: { A: [-28, 0], K: [28, 0] }, pl: { A: 'A', K: 'K' }, pn: { A: 'anode (+)', K: 'cathode (−)' } },
+    RES: { label: 'Resistor', pins: { '1': [-28, 0], '2': [28, 0] }, pl: { '1': '1', '2': '2' }, pn: { '1': 'pin 1', '2': 'pin 2' } },
+    BTN: { label: 'Push button', pins: { '1': [-28, 0], '2': [28, 0] }, pl: { '1': '1', '2': '2' }, pn: { '1': 'pin 1', '2': 'pin 2' } },
+    BUZ: { label: 'Buzzer', pins: { A: [-28, 0], K: [28, 0] }, pl: { A: '+', K: '−' }, pn: { A: '+ (anode)', K: '− (cathode)' } },
+    LDR: { label: 'Photoresistor', pins: { '1': [-28, 0], '2': [28, 0] }, pl: { '1': '1', '2': '2' }, pn: { '1': 'pin 1', '2': 'pin 2' } },
+    POT: { label: 'Potentiometer', box: [-52, -26, 104, 84], pins: { '1': [-44, 0], W: [0, 32], '2': [44, 0] }, pl: { '1': '1', W: 'W', '2': '2' }, pn: { '1': 'pin 1 (one end)', W: 'wiper (middle)', '2': 'pin 2 (other end)' } },
+    RGB: { label: 'RGB LED', box: [-52, -34, 104, 68], pins: { R: [-44, -22], G: [-44, 0], B: [-44, 22], K: [44, 0] }, pl: { R: 'R', G: 'G', B: 'B', K: 'K' }, lo: { R: L_LEFT, G: L_LEFT, B: L_LEFT, K: L_RIGHT },
+      pn: { R: 'red anode', G: 'green anode', B: 'blue anode', K: 'common cathode (−)' }, opt: 'RGB' },
+    SEG: { label: '7-segment display', box: [-58, -54, 116, 108], pins: { a: [-48, -36], b: [-48, -12], c: [-48, 12], d: [-48, 36], e: [48, -36], f: [48, -12], g: [48, 12], K: [48, 36] },
+      pl: { a: 'a', b: 'b', c: 'c', d: 'd', e: 'e', f: 'f', g: 'g', K: 'K' }, lo: { a: L_LEFT, b: L_LEFT, c: L_LEFT, d: L_LEFT, e: L_RIGHT, f: L_RIGHT, g: L_RIGHT, K: L_RIGHT },
+      pn: { a: 'segment a (top)', b: 'segment b (top right)', c: 'segment c (bottom right)', d: 'segment d (bottom)', e: 'segment e (bottom left)', f: 'segment f (top left)', g: 'segment g (middle)', K: 'common cathode (−)' }, opt: 'abcdefg' },
+    PIR: { label: 'Motion sensor (PIR)', box: [-36, -26, 72, 84], pins: { V: [-22, 34], O: [0, 34], G: [22, 34] }, pl: { V: 'V', O: 'O', G: 'G' }, pn: { V: 'V (power, 5V)', O: 'O (output, HIGH on motion)', G: 'G (ground)' } },
+    SRV: { label: 'Servo', box: [-58, -34, 102, 68], pins: { S: [-50, -20], V: [-50, 0], G: [-50, 20] }, pl: { S: 'S', V: 'V', G: 'G' }, lo: { S: L_LEFT, V: L_LEFT, G: L_LEFT }, pn: { S: 'S (signal)', V: 'V (power, 5V)', G: 'G (ground)' } },
+    SR: { label: 'Shift register (74HC595)', box: [-60, -96, 120, 192],
+      pins: { DS: [-50, -66], SH: [-50, -44], ST: [-50, -22], VCC: [-50, 22], GND: [-50, 44], Q0: [50, -77], Q1: [50, -55], Q2: [50, -33], Q3: [50, -11], Q4: [50, 11], Q5: [50, 33], Q6: [50, 55], Q7: [50, 77] },
+      pl: { DS: 'DS', SH: 'SH', ST: 'ST', VCC: 'VCC', GND: 'GND', Q0: 'Q0', Q1: 'Q1', Q2: 'Q2', Q3: 'Q3', Q4: 'Q4', Q5: 'Q5', Q6: 'Q6', Q7: 'Q7' },
+      lo: { DS: L_LEFT, SH: L_LEFT, ST: L_LEFT, VCC: L_LEFT, GND: L_LEFT, Q0: L_RIGHT, Q1: L_RIGHT, Q2: L_RIGHT, Q3: L_RIGHT, Q4: L_RIGHT, Q5: L_RIGHT, Q6: L_RIGHT, Q7: L_RIGHT },
+      pn: { DS: 'DS (serial data in)', SH: 'SH (shift clock)', ST: 'ST (latch clock)', VCC: 'VCC (5V)', GND: 'GND', Q0: 'output Q0', Q1: 'output Q1', Q2: 'output Q2', Q3: 'output Q3', Q4: 'output Q4', Q5: 'output Q5', Q6: 'output Q6', Q7: 'output Q7' }, opt: 'Q' }
+  };
+  var DEFAULT_BOX = [-36, -30, 72, 56];
+  function boxOf(type) { return PART_DEFS[type].box || DEFAULT_BOX; }
+  function optionalPin(type, pn) { var o = PART_DEFS[type].opt; return !!o && o.indexOf(pn.charAt(0)) >= 0; }
+  var MCU_PINS = ['D2', 'D3', 'D4', 'D5', 'D6', 'D7', 'D8', 'D9', 'D10', 'D11', 'D12', 'D13', '5V', 'GND', 'A0', 'A1'];
+  var PWM_PINS = { D3: 1, D5: 1, D6: 1, D9: 1, D10: 1, D11: 1 };
+  var MCU_X = 150, MCU_Y0 = 62, MCU_DY = 24;
+  var BOARD_W = 760, BOARD_H = 520;
+  var WIRE_COLORS = ['#35D9FF', '#9B87FF', '#42D6A4', '#FFCB70', '#7FB2FF', '#5EEAD4', '#FF8F9A'];
+
+  function partBody(type) {
+    switch (type) {
+      case 'LED': return '<polyline class="body" points="-28,0 -10,0"/><polygon class="body" points="-10,-12 -10,12 10,0"/><polyline class="body" points="10,-12 10,12"/><polyline class="body" points="10,0 28,0"/>' +
+        '<polyline class="body" points="2,-14 8,-22" style="stroke:#FFCB70"/><polyline class="body" points="8,-14 14,-22" style="stroke:#FFCB70"/>';
+      case 'RES': return '<polyline class="body" points="-28,0 -16,0 -12,-8 -6,8 0,-8 6,8 12,-8 16,0 28,0"/>';
+      case 'BTN': return '<polyline class="body" points="-28,0 -10,0"/><polyline class="body" points="-10,0 10,-13"/><polyline class="body" points="10,0 28,0"/><polyline class="body" points="-4,-18 4,-18" /><polyline class="body" points="0,-18 0,-10"/>';
+      case 'BUZ': return '<polyline class="body" points="-28,0 -14,0"/><circle class="body" r="14" cx="0" cy="0"/><polyline class="body" points="14,0 28,0"/><text x="0" y="5" text-anchor="middle" style="fill:#E8F0FC;font:14px sans-serif">♪</text>';
+      case 'LDR': return '<polyline class="body" points="-28,0 -14,0"/><circle class="body" r="14" cx="0" cy="0"/><polyline class="body" points="14,0 28,0"/>' +
+        '<polyline class="body" points="-8,0 -6,-5 -3,5 0,-5 3,5 6,-5 8,0" style="stroke-width:1.5"/>' +
+        '<polyline class="body" points="-14,-26 -6,-16" style="stroke:#FFCB70"/><polyline class="body" points="-9,-17 -6,-16 -6,-19" style="stroke:#FFCB70"/>' +
+        '<polyline class="body" points="-4,-28 4,-18" style="stroke:#FFCB70"/><polyline class="body" points="1,-19 4,-18 4,-21" style="stroke:#FFCB70"/>';
+      case 'POT': return '<polyline class="body" points="-44,0 -24,0"/><rect class="body" x="-24" y="-9" width="48" height="18" rx="2"/><polyline class="body" points="24,0 44,0"/>' +
+        '<polyline class="body" points="0,32 0,12"/><polygon class="body" points="-5,15 5,15 0,9" style="fill:#DCE6F7"/>';
+      case 'RGB': return '<polyline class="body" points="-44,-22 -12,-10"/><polyline class="body" points="-44,0 -18,0"/><polyline class="body" points="-44,22 -12,10"/><polyline class="body" points="18,0 44,0"/>' +
+        '<circle class="body" r="18" cx="0" cy="0"/><circle r="4" cx="-6" cy="-5" style="fill:#FF6B78"/><circle r="4" cx="6" cy="-5" style="fill:#42D6A4"/><circle r="4" cx="0" cy="6" style="fill:#7FB2FF"/>';
+      case 'SEG': return '<rect class="body" x="-30" y="-46" width="60" height="92" rx="4"/>' +
+        '<polyline class="body" points="-48,-36 -30,-36"/><polyline class="body" points="-48,-12 -30,-12"/><polyline class="body" points="-48,12 -30,12"/><polyline class="body" points="-48,36 -30,36"/>' +
+        '<polyline class="body" points="30,-36 48,-36"/><polyline class="body" points="30,-12 48,-12"/><polyline class="body" points="30,12 48,12"/><polyline class="body" points="30,36 48,36"/>' +
+        '<g style="stroke:#FFCB70;stroke-width:4;stroke-linecap:round;opacity:.85"><line x1="-11" y1="-30" x2="11" y2="-30"/><line x1="15" y1="-26" x2="15" y2="-4"/><line x1="15" y1="4" x2="15" y2="26"/>' +
+        '<line x1="-11" y1="30" x2="11" y2="30"/><line x1="-15" y1="4" x2="-15" y2="26"/><line x1="-15" y1="-26" x2="-15" y2="-4"/><line x1="-11" y1="0" x2="11" y2="0"/></g>';
+      case 'PIR': return '<path class="body" d="M-26,8 A26,26 0 0 1 26,8 Z"/><rect class="body" x="-28" y="8" width="56" height="12" rx="2"/>' +
+        '<polyline class="body" points="-22,20 -22,34"/><polyline class="body" points="0,20 0,34"/><polyline class="body" points="22,20 22,34"/>' +
+        '<path class="body" d="M-14,-4 A14,14 0 0 1 14,-4" style="stroke-width:1.2;opacity:.6"/>';
+      case 'SRV': return '<rect class="body" x="-34" y="-22" width="68" height="44" rx="4"/><polyline class="body" points="-50,-20 -34,-20"/><polyline class="body" points="-50,0 -34,0"/><polyline class="body" points="-50,20 -34,20"/>' +
+        '<circle class="body" r="7" cx="14" cy="0"/><polyline class="body" points="14,0 14,-30" style="stroke-width:5;stroke-linecap:round"/>';
+      case 'SR': var s = '<rect class="body" x="-32" y="-90" width="64" height="180" rx="4"/><path class="body" d="M-8,-90 A8,8 0 0 0 8,-90"/>' +
+        '<text x="0" y="4" text-anchor="middle" style="fill:#A5B3C8;font:11px var(--mono)">595</text>';
+        [-66, -44, -22, 22, 44].forEach(function (y) { s += '<polyline class="body" points="-50,' + y + ' -32,' + y + '"/>'; });
+        for (var i = 0; i < 8; i++) { var y = -77 + 22 * i; s += '<polyline class="body" points="32,' + y + ' 50,' + y + '"/>'; }
+        return s;
+    }
+    return '';
+  }
+
+  /* ---------- editor state ---------- */
+  var S = null, drag = null, board = null;
+
+  function mcuPinPos(name) { return [MCU_X, MCU_Y0 + MCU_PINS.indexOf(name) * MCU_DY]; }
+  function partById(id) { return S.parts.filter(function (p) { return p.id === id; })[0]; }
+  function pinPos(key) {
+    var i = key.indexOf('.'), owner = key.slice(0, i), pin = key.slice(i + 1);
+    if (owner === 'mcu') return mcuPinPos(pin);
+    var p = partById(owner), d = PART_DEFS[p.type].pins[pin];
+    return [p.x + d[0], p.y + d[1]];
+  }
+  function friendly(key) {
+    var i = key.indexOf('.'), owner = key.slice(0, i), pin = key.slice(i + 1);
+    if (owner === 'mcu') return 'Arduino ' + pin;
+    var p = partById(owner);
+    return owner + ' ' + (p ? (PART_DEFS[p.type].pn[pin] || pin) : pin);
+  }
+  // keep a part (including its pins and labels) inside the board and clear of the Arduino
+  function clampPos(type, x, y) {
+    var b = boxOf(type);
+    return [Math.max(190 - b[0], Math.min(BOARD_W - 8 - b[0] - b[2], x)), Math.max(22 - b[1], Math.min(BOARD_H - 8 - b[1] - b[3], y))];
+  }
+  function countType(t) { return S.parts.filter(function (p) { return p.type === t; }).length; }
+  function nextId(t) { var n = 1; while (partById(t + n)) n++; return t + n; }
+
+  function save() { store.set('cc.p.' + S.problem.id, { parts: S.parts, wires: S.wires, code: S.code }); }
+
+  /* undo history (circuit only) */
+  function snap() {
+    S.hist.push(JSON.stringify({ parts: S.parts, wires: S.wires }));
+    if (S.hist.length > 50) S.hist.shift();
+  }
+  function undo() {
+    if (!S || !S.hist.length) return;
+    var o = JSON.parse(S.hist.pop());
+    S.parts = o.parts; S.wires = o.wires; S.sel = null; S.selWire = null; S.pending = null;
+    changed();
+  }
+
+  function statusInfo() {
+    if (S.pending) return { cls: 'info', html: 'Connecting from <b>' + esc(friendly(S.pending)) + '</b>. Now click the pin you want to join it to. (<span class="kbd">Esc</span> cancels)' };
+    if (S.selWire !== null) return { cls: 'info', html: 'Wire selected. Press <span class="kbd">Delete</span> or the <b>Delete</b> button to remove it.' };
+    if (S.sel) return { cls: 'info', html: '<b>' + esc(S.sel) + '</b> selected. Drag it to move it, or press <span class="kbd">Delete</span> to remove it.' };
+    if (!S.parts.length) return { cls: 'info', html: '<b>Step 1:</b> add the parts you need with the buttons above the board.' };
+    if (!S.wires.length) return { cls: 'info', html: '<b>Step 2:</b> connect them. Click one pin, then click another pin to draw a wire.' };
+    var loose = [];
+    S.parts.forEach(function (p) {
+      var def = PART_DEFS[p.type];
+      Object.keys(def.pins).forEach(function (pn) {
+        if (optionalPin(p.type, pn)) return;
+        var key = p.id + '.' + pn;
+        var used = S.wires.some(function (w) { return w[0] === key || w[1] === key; });
+        if (!used) loose.push(friendly(key));
+      });
+    });
+    if (loose.length) return { cls: 'warn', html: '⚠ Not connected yet: ' + loose.slice(0, 3).map(esc).join(', ') + (loose.length > 3 ? ' and ' + (loose.length - 3) + ' more' : '') + '.' };
+    return { cls: 'ok', html: '✔ Every pin is connected. <b>Step 3:</b> write your firmware below and press <b>Run tests</b>.' };
+  }
+
+  function draw() {
+    var s = '<rect class="mcu" x="20" y="20" width="130" height="' + (MCU_Y0 + (MCU_PINS.length - 1) * MCU_DY + 30 - 20) + '" rx="10"/>' +
+      '<text class="mcu-title" x="85" y="42" text-anchor="middle">ARDUINO UNO</text>';
+    MCU_PINS.forEach(function (n) {
+      var xy = mcuPinPos(n), key = 'mcu.' + n;
+      s += '<text class="pinlbl' + (PWM_PINS[n] ? ' pwm' : '') + '" x="' + (MCU_X - 14) + '" y="' + (xy[1] + 4) + '" text-anchor="end">' + (PWM_PINS[n] ? '~' : '') + n + '</text>' +
+        '<g class="pin' + (S.pending === key ? ' pending' : '') + (S.pending && S.pending !== key ? ' target' : '') + '" data-pin="' + key + '"><title>' + n + '</title><circle class="pinhit" cx="' + xy[0] + '" cy="' + xy[1] + '" r="12"/><circle class="dot" cx="' + xy[0] + '" cy="' + xy[1] + '" r="6"/></g>';
+    });
+    S.wires.forEach(function (w, i) {
+      var a = pinPos(w[0]), b = pinPos(w[1]), dir = b[0] >= a[0] ? 1 : -1, dx = Math.max(40, Math.abs(b[0] - a[0]) / 2);
+      var d = 'M' + a[0] + ' ' + a[1] + ' C' + (a[0] + dir * dx) + ' ' + a[1] + ' ' + (b[0] - dir * dx) + ' ' + b[1] + ' ' + b[0] + ' ' + b[1];
+      s += '<g class="w' + (S.selWire === i ? ' sel' : '') + '" data-wire="' + i + '"><title>Click to select this wire</title><path class="wire" stroke="' + WIRE_COLORS[i % WIRE_COLORS.length] + '" style="color:' + WIRE_COLORS[i % WIRE_COLORS.length] + '" d="' + d + '"/><path class="wire-hit" d="' + d + '"/></g>';
+    });
+    S.parts.forEach(function (p) {
+      var def = PART_DEFS[p.type], bx = boxOf(p.type);
+      s += '<g class="part' + (S.sel === p.id ? ' sel' : '') + '" transform="translate(' + p.x + ',' + p.y + ')" data-part="' + p.id + '">' +
+        '<rect class="hit" x="' + bx[0] + '" y="' + bx[1] + '" width="' + bx[2] + '" height="' + bx[3] + '" rx="6"/>' + partBody(p.type) +
+        '<text class="name" x="0" y="' + (bx[1] - 4) + '">' + p.id + '</text>';
+      Object.keys(def.pins).forEach(function (pn) {
+        var d = def.pins[pn], key = p.id + '.' + pn;
+        s += '<g class="pin' + (S.pending === key ? ' pending' : '') + (S.pending && S.pending !== key ? ' target' : '') + '" data-pin="' + key + '"><title>' + esc(friendly(key)) + '</title><circle class="pinhit" cx="' + d[0] + '" cy="' + d[1] + '" r="12"/><circle class="dot" cx="' + d[0] + '" cy="' + d[1] + '" r="6"/></g>' +
+          (def.lo && def.lo[pn] ? '<text class="plbl" x="' + (d[0] + def.lo[pn][0]) + '" y="' + (d[1] + def.lo[pn][1]) + '" text-anchor="' + def.lo[pn][2] + '">' + def.pl[pn] + '</text>'
+            : '<text class="plbl" x="' + d[0] + '" y="' + (d[1] + 20) + '" text-anchor="middle">' + def.pl[pn] + '</text>');
+      });
+      s += '</g>';
+    });
+    s += '<path id="preview" class="preview" d=""/>';
+    board.innerHTML = s;
+
+    var used = document.getElementById('used');
+    if (used) used.textContent = S.parts.length;
+    var pal = document.querySelectorAll('[data-add]');
+    Array.prototype.forEach.call(pal, function (b) {
+      var t = b.getAttribute('data-add');
+      b.disabled = countType(t) >= S.problem.limits[t];
+      b.querySelector('.count').textContent = countType(t) + '/' + S.problem.limits[t];
+    });
+    document.getElementById('del').disabled = !S.sel && S.selWire === null;
+    document.getElementById('undo').disabled = !S.hist.length;
+    var st = statusInfo(), el = document.getElementById('status');
+    el.className = 'status ' + st.cls; el.innerHTML = st.html;
+  }
+  function changed() { save(); draw(); }
+
+  function svgPoint(e) {
+    var pt = board.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY;
+    return pt.matrixTransform(board.getScreenCTM().inverse());
+  }
+  function updatePreview(e) {
+    var pv = document.getElementById('preview');
+    if (!pv) return;
+    if (!S.pending) { pv.setAttribute('d', ''); return; }
+    var a = pinPos(S.pending), b = svgPoint(e);
+    pv.setAttribute('d', 'M' + a[0] + ' ' + a[1] + ' L' + b.x.toFixed(1) + ' ' + b.y.toFixed(1));
+  }
+  function clickPin(key) {
+    S.sel = null; S.selWire = null;
+    if (!S.pending) { S.pending = key; draw(); return; }
+    if (S.pending === key) { S.pending = null; draw(); return; }
+    var a = S.pending, dup = S.wires.some(function (w) { return (w[0] === a && w[1] === key) || (w[0] === key && w[1] === a); });
+    if (!dup) { snap(); S.wires.push([a, key]); }
+    S.pending = null; changed();
+  }
+  function deleteSel() {
+    if (!S) return;
+    if (S.selWire !== null) {
+      snap(); S.wires.splice(S.selWire, 1); S.selWire = null; changed(); return;
+    }
+    if (!S.sel) return;
+    var id = S.sel;
+    snap();
+    S.parts = S.parts.filter(function (p) { return p.id !== id; });
+    S.wires = S.wires.filter(function (w) { return w[0].split('.')[0] !== id && w[1].split('.')[0] !== id; });
+    S.sel = null; changed();
+  }
+  document.addEventListener('keydown', function (e) {
+    if (!S) return;
+    var inText = e.target && (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT');
+    if (inText) return;
+    if (e.key === 'Delete' || e.key === 'Backspace') { deleteSel(); e.preventDefault(); }
+    if (e.key === 'Escape') { S.pending = null; S.sel = null; S.selWire = null; draw(); }
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { undo(); e.preventDefault(); }
+  });
+
+  /* ---------- running the judge ---------- */
+  function runJudge(job) {
+    return new Promise(function (resolve) {
+      var src = 'var pressedAt=' + pressedAt.toString() + ';\nvar judge=' + judge.toString() + ';\nonmessage=function(e){postMessage(judge(e.data));};';
+      var w = null, timer = null;
+      try {
+        w = new Worker(URL.createObjectURL(new Blob([src], { type: 'text/javascript' })));
+      } catch (e) {
+        // fallback (no timeout protection): run inline
+        try { resolve(judge(job)); } catch (err) { resolve({ verdict: 'Runtime Error', issues: [String(err)], warnings: [], tests: [], used: job.circuit.parts.length }); }
+        return;
+      }
+      timer = setTimeout(function () {
+        w.terminate();
+        resolve({ verdict: 'Time Limit Exceeded', issues: ['Your firmware ran too long without returning (infinite loop?).'], warnings: [], tests: [], used: job.circuit.parts.length });
+      }, 8000);
+      w.onmessage = function (e) { clearTimeout(timer); w.terminate(); resolve(e.data); };
+      w.onerror = function (e) { clearTimeout(timer); w.terminate(); resolve({ verdict: 'Runtime Error', issues: [String(e.message || 'Worker error')], warnings: [], tests: [], used: job.circuit.parts.length }); };
+      w.postMessage(job);
+    });
+  }
+
+  // merge intervals closer than one pixel (and of the same strength) so multiplexed LEDs draw as a solid bar
+  function mergeIv(iv, px) {
+    var out = [];
+    iv.forEach(function (x) {
+      var last = out[out.length - 1];
+      if (last && x[0] - last[1] < px * 1.5 && (last[2] || 1) === (x[2] || 1)) last[1] = x[1]; else out.push(x.slice());
+    });
+    return out;
+  }
+  function timelineSvg(tl) {
+    var W = 516, X0 = 50, rowH = 16, rows = [], dur = tl.duration;
+    (tl.inputs || []).forEach(function (r) { rows.push({ label: r.label, cls: 'inp', iv: r.iv }); });
+    Object.keys(tl.leds).forEach(function (id) { rows.push({ label: id, cls: 'on', iv: tl.leds[id] }); });
+    (tl.servos || []).forEach(function (r) { rows.push({ label: r.label, cls: 'srv', iv: r.iv }); });
+    var h = rows.length * rowH + 16, s = '<svg class="tline" viewBox="0 0 ' + (X0 + W) + ' ' + h + '">';
+    rows.forEach(function (r, i) {
+      var y = i * rowH;
+      s += '<text x="0" y="' + (y + 11) + '">' + esc(r.label) + '</text><rect class="track" x="' + X0 + '" y="' + (y + 1) + '" width="' + W + '" height="' + (rowH - 4) + '" rx="2"/>';
+      mergeIv(r.iv, dur / W).forEach(function (iv) {
+        var x = X0 + iv[0] / dur * W, w = Math.max(1, (iv[1] - iv[0]) / dur * W);
+        var op = iv.length > 2 ? ' fill-opacity="' + Math.max(0.15, iv[2]).toFixed(2) + '"' : '';
+        var tip = iv.length > 3 ? '<title>' + iv[3] + '°</title>' : iv.length > 2 && iv[2] < 1 ? '<title>' + Math.round(iv[2] * 100) + '%</title>' : '';
+        s += '<rect class="' + r.cls + '" x="' + x.toFixed(1) + '" y="' + (y + 1) + '" width="' + w.toFixed(1) + '" height="' + (rowH - 4) + '"' + op + '>' + tip + '</rect>';
+      });
+    });
+    var ay = rows.length * rowH + 10;
+    s += '<text x="' + X0 + '" y="' + ay + '">0</text><text x="' + (X0 + W / 2) + '" y="' + ay + '" text-anchor="middle">' + (dur / 2) + 'ms</text><text x="' + (X0 + W) + '" y="' + ay + '" text-anchor="end">' + dur + 'ms</text></svg>';
+    return s;
+  }
+
+  function nextProblemLink(p) {
+    var i = PROBLEMS.indexOf(p), n = PROBLEMS[i + 1];
+    return n ? '<a href="#/p/' + n.id + '"><b>Next problem: ' + esc(n.title) + ' →</b></a>' : '<a href="#/">Back to all problems →</a>';
+  }
+
+  function showResult(r, submit) {
+    var p = S.problem, el = document.getElementById('result');
+    var ok = r.verdict === 'Accepted';
+    var score = ok ? scoreFor(r.used, p.ref) : 0, rating = ok ? ratingFor(score) : 0;
+    var h = '<div class="verdict ' + (ok ? 'ok' : 'bad') + '">' + esc(r.verdict) + '</div>';
+    h += '<p class="explain">' + esc(VERDICT_HELP[r.verdict] || '') + '</p>';
+    if (!submit) h += '<div class="hint">Practice run: not saved to your submissions. Press <b>Submit</b> to record it.</div>';
+    h += '<div class="stats"><div class="stat"><b>' + r.used + '</b><span>Components used</span></div>';
+    if (ok) {
+      h += '<div class="stat"><b>' + p.ref + '</b><span>Optimal</span></div><div class="stat"><b>' + score + '%</b><span>Score</span></div><div class="stat"><b>' + stars(rating) + '</b><span>Rating</span></div>' +
+        (submit ? '<div class="stat"><b>' + fmtTime(elapsed()) + '</b><span>Time taken</span></div><div class="stat"><b>+' + pointsFor(p, score) + '</b><span>Points</span></div>' : '');
+    }
+    h += '</div>';
+    if (ok && r.used < p.ref) h += '<p class="v-ok">You beat the reference solution — tell the problem setter!</p>';
+    if (ok && r.used > p.ref) h += '<p class="hint">A solution with ' + p.ref + ' components exists. Can you remove ' + (r.used - p.ref) + '?</p>';
+    if (ok) h += '<p>' + nextProblemLink(p) + '</p>';
+    (r.issues || []).forEach(function (m) { h += '<p class="v-bad">' + esc(m) + '</p>'; });
+    (r.warnings || []).forEach(function (m) { h += '<p class="warn">⚠ ' + esc(m) + '</p>'; });
+    if (r.tests.length) {
+      h += '<ul class="tests">';
+      r.tests.forEach(function (t, i) {
+        h += '<li><span class="' + (t.pass ? 'ok' : 'no') + '">' + (t.pass ? '✔' : '✘') + '</span> ' + (t.hidden ? 'Hidden test ' + (i + 1) : esc(t.name));
+        if (!t.pass && t.message) h += '<small>' + esc(t.message) + '</small>';
+        if (!t.hidden) h += timelineSvg(t.timeline);
+        h += '</li>';
+      });
+      h += '</ul>';
+      h += '<p class="hint">The timeline shows inputs in blue (button presses, motion, and knob or light level as shading), outputs in orange (LEDs, buzzer, display segments; dimmer = fainter) and servo angle in violet.</p>';
+    }
+    if (!ok) h += '<p class="hint">Stuck? Use the <b>Hints</b> card on the left.</p>';
+    el.innerHTML = h; el.hidden = false;
+    el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    if (submit) {
+      var subs = allSubs(), sub = { pid: p.id, user: userKey(), ts: Date.now(), verdict: r.verdict, used: r.used, score: score, time: Math.floor(elapsed()) };
+      subs.unshift(sub);
+      store.set('cc.subs', subs.slice(0, 300));
+      if (ok) { recordBoard(sub); tPause(); }
+      renderSubs();
+    }
+  }
+
+  function renderSubs() {
+    var el = document.getElementById('subs'), mine = mySubs().filter(function (s) { return s.pid === S.problem.id; }).slice(0, 6);
+    if (!mine.length) { el.innerHTML = '<span class="hint">No submissions yet.</span>'; return; }
+    el.innerHTML = '<table class="subs">' + mine.map(function (s) {
+      return '<tr><td class="' + (s.verdict === 'Accepted' ? 'v-ok' : 'v-bad') + '">' + esc(s.verdict) + '</td><td>' + s.used + ' parts</td><td>' + (s.verdict === 'Accepted' ? s.score + '%' : '—') + '</td><td>' + (s.time ? fmtTime(s.time) : '—') +
+        '</td><td class="hint">' + new Date(s.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + '</td></tr>';
+    }).join('') + '</table>';
+  }
+
+  function renderHints() {
+    var el = document.getElementById('hints'), hs = S.problem.hints || [];
+    if (!hs.length) { el.parentNode.hidden = true; return; }
+    var n = S.hintsShown, h = '';
+    if (n) h += '<ol>' + hs.slice(0, n).map(function (x) { return '<li>' + md(x) + '</li>'; }).join('') + '</ol>';
+    else h += '<p class="hint" style="margin-top:0">Try on your own first. Hints get more specific one at a time.</p>';
+    if (n < hs.length) h += '<button id="hintbtn">💡 Show hint ' + (n + 1) + ' of ' + hs.length + '</button>';
+    else h += '<span class="hint">No more hints.</span>';
+    el.innerHTML = h;
+    var b = document.getElementById('hintbtn');
+    if (b) b.addEventListener('click', function () {
+      S.hintsShown++; store.set('cc.h.' + S.problem.id, S.hintsShown); renderHints();
+    });
+  }
+
+  function run(submit) {
+    var p = S.problem, btns = document.querySelectorAll('[data-run]');
+    var el = document.getElementById('result');
+    if (!S.parts.length) {
+      el.hidden = false;
+      el.innerHTML = '<div class="verdict bad">Nothing to test yet</div><p class="explain">Your board is empty. Add the parts you need, connect them with wires, then run the tests again.</p>';
+      el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      return;
+    }
+    var job = {
+      circuit: { parts: S.parts.map(function (x) { return { id: x.id, type: x.type }; }), wires: S.wires },
+      code: S.code, limits: p.limits,
+      tests: p.tests.map(function (t) { return { name: t.name, hidden: !!t.hidden, duration: t.duration, input: t.input || null, inputs: t.inputs || null, analog: t.analog || null, check: t.check.toString() }; })
+    };
+    Array.prototype.forEach.call(btns, function (b) { b.disabled = true; });
+    el.hidden = false; el.innerHTML = '<span class="hint">⏳ Judging…</span>';
+    runJudge(job).then(function (r) {
+      Array.prototype.forEach.call(btns, function (b) { b.disabled = false; });
+      showResult(r, submit);
+    });
+  }
+
+  /* ---------- pages ---------- */
+  var filter = 'All';
+
+  function stepsHtml() {
+    return '<div class="steps">' +
+      '<div class="step"><span class="n">1</span><b>Build</b><p>Add parts (LEDs, buttons, sensors, displays, servos…) and wire them to the Arduino pins by clicking pin → pin.</p></div>' +
+      '<div class="step"><span class="n">2</span><b>Program</b><p>Write firmware in JavaScript using the Arduino functions: <code>pinMode</code>, <code>digitalWrite</code>, <code>delay</code>…</p></div>' +
+      '<div class="step"><span class="n">3</span><b>Test &amp; score</b><p>Press <b>Run tests</b> to check, <b>Submit</b> to save. Use fewer parts to earn a higher score and more stars.</p></div>' +
+      '</div>';
+  }
+
+  function renderList() {
+    S = null;
+    var solved = PROBLEMS.filter(function (p) { return bestFor(p.id); }).length;
+    var pct = Math.round(solved / PROBLEMS.length * 100);
+    var next = PROBLEMS.filter(function (p) { return !bestFor(p.id); })[0];
+    var h = '';
+    if (!store.get('cc.welcomeHidden', false)) {
+      h += '<div class="banner"><button class="x" id="hidewelcome" aria-label="Dismiss welcome">×</button><h2>Welcome to CircuitCode 👋</h2><div class="hint" style="margin:0">Practice electronics + Arduino programming in your browser. No hardware needed.</div>' + stepsHtml() + '<div class="hint">New to circuits? Read <a href="#/help">How it works</a>.</div></div>';
+    }
+    h += '<h1>Problems</h1><p class="sub">Build the circuit with as few parts as you can, program the board, and get rated. <b>' + solved + ' / ' + PROBLEMS.length + '</b> solved.</p>' +
+      '<div class="progress" title="' + pct + '% solved"><i style="width:' + pct + '%"></i></div>' +
+      '<div class="toolbar">' + ['All', 'Easy', 'Medium', 'Hard', 'Nearly Impossible'].map(function (f) {
+        return '<button class="fchip' + (filter === f ? ' on' : '') + '" data-filter="' + f + '">' + f + '</button>';
+      }).join('') + '<span class="grow"></span>' +
+      (next ? '<a href="#/p/' + next.id + '"><button class="primary">' + (solved ? 'Continue: ' : 'Start: ') + esc(next.title) + ' →</button></a>' : '<span class="v-ok">🎉 All problems solved!</span>') + '</div>' +
+      '<div class="tablewrap"><table class="list"><thead><tr><th>#</th><th>Title</th><th>Difficulty</th><th>Parts provided</th><th>Your best</th></tr></thead><tbody>';
+    var shown = 0;
+    PROBLEMS.forEach(function (p, i) {
+      if (filter !== 'All' && p.difficulty !== filter) return;
+      shown++;
+      var b = bestFor(p.id), total = Object.keys(p.limits).reduce(function (a, k) { return a + p.limits[k]; }, 0);
+      h += '<tr data-go="' + p.id + '"><td>' + (i + 1) + '</td><td><a href="#/p/' + p.id + '">' + esc(p.title) + '</a></td><td><span class="chip ' + dcls(p.difficulty) + '">' + p.difficulty + '</span></td><td>' + total + '</td>' +
+        '<td>' + (b ? '<span class="solved">✔</span> ' + b.used + ' parts · ' + b.score + '% ' + stars(ratingFor(b.score)) + (b.time ? ' <span class="hint">· ' + fmtTime(b.time) + '</span>' : '') : '<span class="hint">Not solved yet</span>') + '</td></tr>';
+    });
+    if (!shown) h += '<tr><td colspan="5" class="hint">No problems in this difficulty yet.</td></tr>';
+    app.innerHTML = h + '</tbody></table></div>';
+
+    var hw = document.getElementById('hidewelcome');
+    if (hw) hw.addEventListener('click', function () { store.set('cc.welcomeHidden', true); renderList(); });
+    Array.prototype.forEach.call(app.querySelectorAll('[data-filter]'), function (b) {
+      b.addEventListener('click', function () { filter = b.getAttribute('data-filter'); renderList(); });
+    });
+    Array.prototype.forEach.call(app.querySelectorAll('[data-go]'), function (tr) {
+      tr.addEventListener('click', function (e) { if (e.target.tagName !== 'A') location.hash = '#/p/' + tr.getAttribute('data-go'); });
+    });
+  }
+
+  function renderHelp() {
+    S = null;
+    app.innerHTML = '<div class="card guide"><a href="#/">← All problems</a><h1 style="margin-top:8px">How CircuitCode works</h1>' +
+      '<p class="sub">A two-minute guide to building and testing your first circuit.</p>' + stepsHtml() +
+      '<h2>Circuit basics</h2><ul>' +
+      '<li><b>LED:</b> has polarity. Current flows from the <b>anode (A, +)</b> to the <b>cathode (K, −)</b>. Backwards = no light.</li>' +
+      '<li><b>Resistor:</b> limits current. An LED with no resistor in its path <b>burns out</b>, and the judge will tell you.</li>' +
+      '<li><b>Push button:</b> connects its two pins only while pressed.</li>' +
+      '<li><b>5V / GND:</b> the power rails. Connecting 5V straight to GND with no resistor is a <b>short circuit</b>.</li>' +
+      '<li><b>Digital pins D2–D13:</b> your firmware sets each one HIGH (5V) or LOW (0V), or reads it as an input. Pins marked <b>~</b> can also do PWM with <code>analogWrite</code>.</li>' +
+      '<li><b>Analog pins A0, A1:</b> <code>analogRead</code> turns their voltage into a number from 0 to 1023.</li></ul>' +
+      '<h2>More parts</h2><ul>' +
+      '<li><b>Potentiometer:</b> a knob. Put its two ends on 5V and GND, and the middle pin <b>W</b> gives a voltage that follows the knob. Read it with <code>analogRead</code>.</li>' +
+      '<li><b>Photoresistor (LDR):</b> its resistance falls in bright light (about 1 kΩ) and rises in the dark (about 100 kΩ). Pair it with a resistor as a voltage divider and read the middle point.</li>' +
+      '<li><b>Motion sensor (PIR):</b> needs power (V → 5V, G → GND). Its output <b>O</b> is HIGH while it sees motion.</li>' +
+      '<li><b>RGB LED:</b> three LEDs (red, green, blue) sharing one cathode <b>K</b>. Mix colours with PWM.</li>' +
+      '<li><b>7-segment display:</b> seven LED segments, <b>a</b> (top) clockwise to <b>f</b>, and <b>g</b> in the middle, sharing a cathode <b>K</b>.</li>' +
+      '<li><b>Servo:</b> a motor that holds an angle from 0° to 180°. Power it from 5V/GND and drive <b>S</b> with the <code>Servo</code> object.</li>' +
+      '<li><b>Shift register (74HC595):</b> turns 3 pins into 8 outputs. Each rising edge on <b>SH</b> shifts the bit on <b>DS</b> in at Q0; a rising edge on <b>ST</b> copies the eight bits to <b>Q0–Q7</b>. Power: VCC → 5V, GND → GND.</li>' +
+      '<li>For analog readings every fixed resistor counts as 10 kΩ, and a lit LED as about 1 kΩ, so an LED hung on a divider changes its reading.</li></ul>' +
+      '<h2>Using the board</h2><ul>' +
+      '<li>Click an add-button to place a part. Drag it to move it.</li>' +
+      '<li>Click a pin, then another pin to draw a wire. A dashed line follows your cursor while you connect. Hover a pin to see its name.</li>' +
+      '<li>Click a wire or part to select it, then press <span class="kbd">Delete</span>. Made a mistake? <span class="kbd">' + MOD + '+Z</span> undoes it.</li>' +
+      '<li>The status bar under the board always tells you what to do next.</li></ul>' +
+      '<h2>Firmware basics</h2><ul>' +
+      '<li><code>setup()</code> runs once at the start. <code>loop()</code> runs again and again.</li>' +
+      '<li>Set a pin as output with <code>pinMode(5, OUTPUT)</code>, then <code>digitalWrite(5, HIGH)</code> turns it on.</li>' +
+      '<li><code>delay(500)</code> waits half a second.</li>' +
+      '<li>For a button, use <code>pinMode(2, INPUT_PULLUP)</code>. Pressed reads <code>LOW</code>.</li></ul>' +
+      '<h2>Scoring</h2><ul>' +
+      '<li>You pass when all tests (including hidden ones) pass.</li>' +
+      '<li>Score = optimal parts ÷ your parts. Wires are free, so fewer parts is better.</li>' +
+      '<li>★★★ = 100%, ★★ = 70% or more, ★ = accepted.</li>' +
+      '<li>Your work saves automatically in this browser.</li></ul>' +
+      '<p><a href="#/"><button class="primary">Start solving →</button></a></p></div>';
+  }
+
+  function renderProblem(p) {
+    var saved = store.get('cc.p.' + p.id, null);
+    S = { problem: p, parts: saved ? saved.parts : [], wires: saved ? saved.wires : [], code: saved ? saved.code : p.starter, sel: null, selWire: null, pending: null, hist: [], hintsShown: store.get('cc.h.' + p.id, 0), tkey: 'cc.t.' + userKey() + '.' + p.id, autoPaused: false };
+    S.tms = store.get(S.tkey, 0);
+    S.tstart = bestFor(p.id) ? null : Date.now();   // already solved: start paused
+    var types = Object.keys(p.limits).filter(function (t) { return p.limits[t] > 0; });
+    var totalParts = types.reduce(function (a, t) { return a + p.limits[t]; }, 0);
+    var h = '<div class="problem"><div>' +
+      '<div class="card"><a href="#/">← All problems</a><h1 style="margin-top:8px">' + esc(p.title) + '</h1><span class="chip ' + dcls(p.difficulty) + '">' + p.difficulty + '</span>' +
+      '<span class="timer" id="timerbox" title="Time you have spent on this problem"><span>⏱</span><b id="tval">00:00</b><button class="tbtn" id="tpause">⏸ Pause</button><button class="tbtn" id="treset">Reset</button></span><div style="height:12px"></div>' +
+      p.statement.map(function (x) { return '<p>' + md(x) + '</p>'; }).join('') +
+      '<h2>Parts provided</h2><div class="parts-list">' + types.map(function (t) { return '<span>' + p.limits[t] + ' × ' + PART_DEFS[t].label + '</span>'; }).join('') + '</div>' +
+      '<p class="hint" style="margin-top:12px">Pins: digital 2–13 (~ = PWM), analog A0–A1, 5V, GND. Score = optimal parts ÷ your parts (max 100%). Wires are free.</p></div>' +
+      '<div class="card hints"><h2>💡 Hints</h2><div id="hints"></div></div>' +
+      '<div class="card"><h2>Your submissions</h2><div id="subs"></div></div></div>' +
+      '<div><div class="card"><h2>Circuit</h2><div class="bar">' +
+      types.map(function (t) { return '<button data-add="' + t + '">+ ' + PART_DEFS[t].label + ' <span class="count"></span></button>'; }).join('') +
+      '<span class="grow"></span><span class="hint" style="margin:0">Parts used: <b id="used">0</b> / ' + totalParts + '</span></div>' +
+      '<div class="bar"><button id="undo" title="Undo (' + MOD + '+Z)">↶ Undo</button><button id="del" class="danger">Delete selected</button><span class="grow"></span><button id="clearw">Clear wires</button><button id="resetc">Reset circuit</button></div>' +
+      '<svg id="board" class="board" viewBox="0 0 ' + BOARD_W + ' ' + BOARD_H + '" role="img" aria-label="Circuit board editor"></svg>' +
+      '<div id="status" class="status"></div>' +
+      '<div class="hint">Tip: drag parts to move them. Hover a pin to see its name. Your work is saved automatically.</div></div>' +
+      '<div class="card"><h2>Firmware <span class="hint">(JavaScript with the Arduino API)</span></h2>' +
+      '<textarea id="code" class="code" spellcheck="false" aria-label="Firmware code"></textarea>' +
+      '<div class="bar" style="margin:10px 0 0"><button data-run class="primary" id="runbtn">▶ Run tests</button><button data-run class="green" id="subbtn">Submit</button><span class="hint" style="margin:0"><span class="kbd">' + MOD + '+Enter</span> runs tests</span><span class="grow"></span><button id="resetcode">Reset code</button></div>' +
+      '<details class="ref"><summary>Arduino function cheat sheet</summary><table>' +
+      '<tr><td><code>pinMode(pin, mode)</code></td><td><code>OUTPUT</code>, <code>INPUT</code> or <code>INPUT_PULLUP</code></td></tr>' +
+      '<tr><td><code>digitalWrite(pin, v)</code></td><td><code>HIGH</code> (5V) or <code>LOW</code> (0V) on an output pin</td></tr>' +
+      '<tr><td><code>digitalRead(pin)</code></td><td>returns <code>HIGH</code> or <code>LOW</code></td></tr>' +
+      '<tr><td><code>delay(ms)</code></td><td>wait for the given milliseconds</td></tr>' +
+      '<tr><td><code>millis()</code></td><td>milliseconds since start</td></tr>' +
+      '<tr><td><code>analogRead(A0)</code></td><td>voltage on A0 or A1 as 0–1023 (0V–5V)</td></tr>' +
+      '<tr><td><code>analogWrite(pin, 0..255)</code></td><td>PWM brightness. Only pins 3, 5, 6, 9, 10, 11 (marked ~ on the board)</td></tr>' +
+      '<tr><td><code>var s = new Servo()</code></td><td><code>s.attach(pin)</code>, then <code>s.write(0..180)</code> sets the angle</td></tr>' +
+      '<tr><td><code>shiftOut(data, clock, MSBFIRST, v)</code></td><td>clocks out 8 bits of <code>v</code>, highest first (<code>LSBFIRST</code>: lowest first)</td></tr>' +
+      '<tr><td><code>map(x, a, b, c, d)</code></td><td>rescales <code>x</code> from a..b to c..d (whole numbers); <code>constrain(x, lo, hi)</code> clamps</td></tr>' +
+      '<tr><td><code>setup()</code> / <code>loop()</code></td><td>run once / run forever</td></tr>' +
+      '</table></details></div>' +
+      '<div class="card" id="result" hidden></div></div></div>';
+    app.innerHTML = h;
+
+    board = document.getElementById('board');
+    var ta = document.getElementById('code');
+    ta.value = S.code;
+    ta.addEventListener('input', function () { S.code = ta.value; save(); });
+    ta.addEventListener('keydown', function (e) {
+      if (e.key === 'Tab') { e.preventDefault(); ta.setRangeText('  ', ta.selectionStart, ta.selectionEnd, 'end'); S.code = ta.value; save(); }
+      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); if (!document.getElementById('runbtn').disabled) run(false); }
+    });
+
+    Array.prototype.forEach.call(document.querySelectorAll('[data-add]'), function (b) {
+      b.addEventListener('click', function () {
+        var t = b.getAttribute('data-add');
+        if (countType(t) >= p.limits[t]) return;
+        snap();
+        var n = S.parts.length;
+        var pos = clampPos(t, 300 + (n % 3) * 140, 90 + Math.floor(n / 3) * 100);
+        S.parts.push({ id: nextId(t), type: t, x: pos[0], y: pos[1] });
+        changed();
+      });
+    });
+    document.getElementById('undo').addEventListener('click', undo);
+    document.getElementById('del').addEventListener('click', deleteSel);
+    document.getElementById('clearw').addEventListener('click', function () {
+      if (!S.wires.length) return;
+      if (!confirm('Remove all wires? (You can undo this.)')) return;
+      snap(); S.wires = []; S.pending = null; S.selWire = null; changed();
+    });
+    document.getElementById('resetc').addEventListener('click', function () {
+      if (!S.parts.length && !S.wires.length) return;
+      if (!confirm('Remove all parts and wires? (You can undo this.)')) return;
+      snap(); S.parts = []; S.wires = []; S.sel = null; S.selWire = null; S.pending = null; changed();
+    });
+    document.getElementById('resetcode').addEventListener('click', function () {
+      if (S.code !== p.starter && !confirm('Replace your code with the starter code? This cannot be undone.')) return;
+      S.code = p.starter; ta.value = p.starter; save();
+    });
+    document.getElementById('runbtn').addEventListener('click', function () { run(false); });
+    document.getElementById('subbtn').addEventListener('click', function () { run(true); });
+
+    board.addEventListener('pointerdown', function (e) {
+      var pin = e.target.closest('[data-pin]');
+      if (pin) { clickPin(pin.getAttribute('data-pin')); return; }
+      var wire = e.target.closest('[data-wire]');
+      if (wire) { S.selWire = +wire.getAttribute('data-wire'); S.sel = null; S.pending = null; draw(); return; }
+      var part = e.target.closest('[data-part]');
+      if (part) {
+        var id = part.getAttribute('data-part'), pp = partById(id), pt = svgPoint(e);
+        S.sel = id; S.selWire = null; S.pending = null; drag = { id: id, dx: pt.x - pp.x, dy: pt.y - pp.y, moved: false };
+        try { board.setPointerCapture(e.pointerId); } catch (err) {}
+        draw(); return;
+      }
+      S.sel = null; S.selWire = null; S.pending = null; draw();
+    });
+    board.addEventListener('pointermove', function (e) {
+      if (!drag) { if (S.pending) updatePreview(e); return; }
+      var pt = svgPoint(e), pp = partById(drag.id);
+      var cp = clampPos(pp.type, Math.round((pt.x - drag.dx) / 10) * 10, Math.round((pt.y - drag.dy) / 10) * 10), nx = cp[0], ny = cp[1];
+      if (nx === pp.x && ny === pp.y) return;
+      if (!drag.moved) {
+        // record the position before the first move so Undo can restore it
+        var cur = { x: pp.x, y: pp.y };
+        pp.x = drag.startX = cur.x; pp.y = drag.startY = cur.y;
+        snap(); drag.moved = true;
+      }
+      pp.x = nx; pp.y = ny;
+      draw();
+    });
+    board.addEventListener('pointerup', function () { if (drag) { drag = null; save(); } });
+
+    document.getElementById('tpause').addEventListener('click', function () { if (S.tstart) tPause(); else tResume(); });
+    document.getElementById('treset').addEventListener('click', function () {
+      if (!confirm('Reset the stopwatch for this problem to 00:00?')) return;
+      S.tms = 0; S.tstart = Date.now(); S.autoPaused = false; tPersist(); tUi();
+    });
+    var n = 0;
+    clearInterval(tick);
+    tick = setInterval(function () { if (!S) return; tUi(); if (++n % 10 === 0) tPersist(); }, 500);
+
+    draw(); renderSubs(); renderHints(); tUi();
+  }
+
+  /* ---------- stopwatch ---------- */
+  var tick = null;
+  function elapsed() { return S && S.tkey ? S.tms + (S.tstart ? Date.now() - S.tstart : 0) : 0; }
+  function tPersist() { if (S && S.tkey) store.set(S.tkey, Math.floor(elapsed())); }
+  function tPause() { if (S && S.tkey && S.tstart) { S.tms += Date.now() - S.tstart; S.tstart = null; tPersist(); tUi(); } }
+  function tResume() { if (S && S.tkey && !S.tstart) { S.tstart = Date.now(); tUi(); } }
+  function tUi() {
+    var v = document.getElementById('tval'), b = document.getElementById('tpause'), box = document.getElementById('timerbox');
+    if (!v || !S || !S.tkey) return;
+    v.textContent = fmtTime(elapsed());
+    b.textContent = S.tstart ? '⏸ Pause' : '▶ Resume';
+    box.className = 'timer' + (S.tstart ? ' live' : '');
+  }
+  function stopTimer() {
+    if (S && S.tkey) { tPause(); tPersist(); }
+    clearInterval(tick); tick = null;
+  }
+  // pause automatically while the tab is hidden, resume when it comes back
+  document.addEventListener('visibilitychange', function () {
+    if (!S || !S.tkey) return;
+    if (document.hidden) { if (S.tstart) { tPause(); S.autoPaused = true; } }
+    else if (S.autoPaused) { S.autoPaused = false; tResume(); }
+  });
+  window.addEventListener('pagehide', tPersist);
+
+  /* ---------- points, board, standings ---------- */
+  var BASE = { Easy: 100, Medium: 200, Hard: 300, 'Nearly Impossible': 500 };
+  function pointsFor(p, score) { return Math.round((BASE[p.difficulty] || 100) * score / 100); }
+  function recordBoard(sub) {
+    var u = getUser(), k = userKey(u), b = store.get('cc.board', {}), e = b[k] || { solved: {} };
+    e.name = u.name || u.github || 'Guest'; e.github = u.github; e.photo = u.photo;
+    var cur = e.solved[sub.pid];
+    if (!cur || sub.score > cur.score || (sub.score === cur.score && sub.time < cur.time)) {
+      e.solved[sub.pid] = { score: sub.score, used: sub.used, time: sub.time, ts: sub.ts };
+    }
+    b[k] = e; store.set('cc.board', b);
+  }
+  function standings() {
+    var b = store.get('cc.board', {}), rows = [];
+    Object.keys(b).forEach(function (k) {
+      var e = b[k], pts = 0, stars = 0, time = 0, n = 0;
+      PROBLEMS.forEach(function (p) {
+        var s = e.solved && e.solved[p.id];
+        if (s) { n++; pts += pointsFor(p, s.score); stars += ratingFor(s.score); time += s.time || 0; }
+      });
+      if (n) rows.push({ key: k, name: e.name || 'Guest', github: e.github, photo: e.photo, solved: n, points: pts, stars: stars, time: time });
+    });
+    rows.sort(function (a, c) { return c.points - a.points || a.time - c.time || a.name.localeCompare(c.name); });
+    var rank = 0, prev = null;
+    rows.forEach(function (r, i) {
+      if (!prev || r.points !== prev.points || r.time !== prev.time) rank = i + 1;
+      r.rank = rank; prev = r;
+    });
+    return rows;
+  }
+  function migrateUser(oldK, newK, nu) {
+    var subs = allSubs(), b = store.get('cc.board', {});
+    var taken = !!b[newK] || subs.some(function (s) { return (s.user || 'guest') === newK; });
+    if (!taken && oldK !== newK) {
+      subs.forEach(function (s) { if ((s.user || 'guest') === oldK) s.user = newK; });
+      store.set('cc.subs', subs);
+      if (b[oldK]) { b[newK] = b[oldK]; delete b[oldK]; }
+      PROBLEMS.forEach(function (p) {
+        var v = store.get('cc.t.' + oldK + '.' + p.id, null);
+        if (v !== null) { store.set('cc.t.' + newK + '.' + p.id, v); try { localStorage.removeItem('cc.t.' + oldK + '.' + p.id); } catch (e) {} }
+      });
+    }
+    if (b[newK]) { b[newK].name = nu.name || nu.github || 'Guest'; b[newK].github = nu.github; b[newK].photo = nu.photo; }
+    store.set('cc.board', b);
+  }
+  function resetMine() {
+    var k = userKey(), b = store.get('cc.board', {});
+    store.set('cc.subs', allSubs().filter(function (s) { return (s.user || 'guest') !== k; }));
+    delete b[k]; store.set('cc.board', b);
+    PROBLEMS.forEach(function (p) { try { localStorage.removeItem('cc.t.' + k + '.' + p.id); } catch (e) {} });
+  }
+
+  /* ---------- progress & leaderboard pages ---------- */
+  function renderProgress() {
+    S = null;
+    var u = getUser(), k = userKey(u), subs = mySubs();
+    var solved = 0, stars = 0, pts = 0, scoreSum = 0, spent = 0;
+    var rows = PROBLEMS.map(function (p) {
+      var b = bestFor(p.id), att = subs.filter(function (s) { return s.pid === p.id; }).length, t = store.get('cc.t.' + k + '.' + p.id, 0);
+      spent += t;
+      if (b) { solved++; stars += ratingFor(b.score); pts += pointsFor(p, b.score); scoreSum += b.score; }
+      return { p: p, b: b, att: att, t: t };
+    });
+    var okCount = subs.filter(function (s) { return s.verdict === 'Accepted'; }).length;
+    var acc = subs.length ? Math.round(okCount / subs.length * 100) : 0;
+    var pct = Math.round(solved / PROBLEMS.length * 100);
+    var st = standings(), me = st.filter(function (r) { return r.key === k; })[0];
+    var shown = u.name || (u.github ? '@' + u.github : 'Guest');
+    var h = '<div class="card"><div class="player" style="gap:14px">' + avatarHtml(u, 56) + '<div><h1 style="margin:0">' + esc(shown) + '</h1><div class="sub" style="margin:0">' +
+      (me ? 'Rank <b>#' + me.rank + '</b> of ' + st.length + ' on the <a href="#/leaderboard">leaderboard</a>' : 'Solve a problem to appear on the <a href="#/leaderboard">leaderboard</a>') + '</div></div></div>';
+    if (!u.name && !u.github) h += '<p class="hint">You are playing as Guest. Click your name at the top right to set a username and photo.</p>';
+    h += '<div class="cards">' + [
+      [solved + ' / ' + PROBLEMS.length, 'Problems solved'], [pts, 'Points'], [stars + ' / ' + (PROBLEMS.length * 3), 'Stars'],
+      [solved ? Math.round(scoreSum / solved) + '%' : '—', 'Average score'], [spent ? fmtTime(spent) : '—', 'Time spent'], [subs.length ? acc + '%' : '—', 'Submission accuracy']
+    ].map(function (c) { return '<div class="cardstat"><b>' + c[0] + '</b><span>' + c[1] + '</span></div>'; }).join('') + '</div>' +
+      '<div class="progress" title="' + pct + '% solved"><i style="width:' + pct + '%"></i></div>' +
+      '<div class="tablewrap"><table class="list static"><thead><tr><th>#</th><th>Problem</th><th>Difficulty</th><th>Status</th><th>Attempts</th><th>Best result</th><th>Best time</th><th>Time spent</th></tr></thead><tbody>';
+    rows.forEach(function (r, i) {
+      var status = r.b ? ['Solved', 'Solved'] : (r.att || r.t) ? ['Progress', 'In progress'] : ['New', 'Not started'];
+      h += '<tr><td>' + (i + 1) + '</td><td><a href="#/p/' + r.p.id + '">' + esc(r.p.title) + '</a></td><td><span class="chip ' + dcls(r.p.difficulty) + '">' + r.p.difficulty + '</span></td>' +
+        '<td><span class="chip ' + status[0] + '">' + status[1] + '</span></td><td>' + r.att + '</td>' +
+        '<td>' + (r.b ? r.b.used + ' parts · ' + r.b.score + '% ' + stars_(r.b.score) : '—') + '</td><td>' + (r.b && r.b.time ? fmtTime(r.b.time) : '—') + '</td><td>' + (r.t ? fmtTime(r.t) : '—') + '</td></tr>';
+    });
+    h += '</tbody></table></div></div>';
+    var recent = subs.slice(0, 8);
+    h += '<div class="card"><h2>Recent activity</h2>';
+    if (!recent.length) h += '<span class="hint">No submissions yet. <a href="#/">Pick a problem</a> to get started.</span>';
+    else {
+      h += '<ul class="activity">' + recent.map(function (s) {
+        var p = PROBLEMS.filter(function (x) { return x.id === s.pid; })[0];
+        return '<li><span class="' + (s.verdict === 'Accepted' ? 'v-ok' : 'v-bad') + '">' + esc(s.verdict) + '</span><span>' + esc(p ? p.title : s.pid) + '</span>' +
+          (s.time ? '<span class="hint" style="margin:0">' + fmtTime(s.time) + '</span>' : '') +
+          '<span class="when">' + new Date(s.ts).toLocaleString([], { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) + '</span></li>';
+      }).join('') + '</ul>';
+    }
+    h += '</div><p style="margin-top:16px"><button class="danger" id="resetmine">Reset my progress</button></p>';
+    app.innerHTML = h;
+    wireAvatars(app);
+    document.getElementById('resetmine').addEventListener('click', function () {
+      if (!confirm('Delete all your submissions, times and leaderboard entry? This cannot be undone.')) return;
+      resetMine(); renderProgress();
+    });
+  }
+  function stars_(score) { return stars(ratingFor(score)); }
+
+  function renderLeaderboard() {
+    S = null;
+    var rows = standings(), k = userKey(), u = getUser(), me = rows.filter(function (r) { return r.key === k; })[0];
+    var h = '<h1>Leaderboard</h1><p class="sub">Ranked by points. Each solved problem earns its difficulty value (Easy 100, Medium 200, Hard 300, Nearly Impossible 500) × your score %. Ties go to the player with less total time.</p>';
+    if (me) h += '<div class="banner" style="padding:12px 16px">Your rank: <b>#' + me.rank + '</b> of ' + rows.length + ' · ' + me.points + ' points</div>';
+    else h += '<div class="banner" style="padding:12px 16px">You are not ranked yet. <a href="#/">Solve a problem</a> and press Submit to join the board.' +
+      ((u.name || u.github) ? '' : ' Set your name at the top right first so others can recognise you.') + '</div>';
+    h += '<div class="tablewrap"><table class="list static"><thead><tr><th>Rank</th><th>Player</th><th>Solved</th><th>Points</th><th>Stars</th><th>Total time</th></tr></thead><tbody>';
+    var medals = ['🥇', '🥈', '🥉'];
+    rows.forEach(function (r) {
+      h += '<tr' + (r.key === k ? ' class="me"' : '') + '><td class="rankcell">' + (r.rank <= 3 ? medals[r.rank - 1] + ' ' : '') + '#' + r.rank + '</td>' +
+        '<td><div class="player">' + avatarHtml({ name: r.name, github: r.github, photo: r.photo }, 28) + '<span>' + esc(r.name) + (r.key === k ? ' <span class="hint">(you)</span>' : '') + '</span></div></td>' +
+        '<td>' + r.solved + ' / ' + PROBLEMS.length + '</td><td><b>' + r.points + '</b></td><td><span class="stars">★</span> ' + r.stars + '</td><td>' + fmtTime(r.time) + '</td></tr>';
+    });
+    if (!rows.length) h += '<tr><td colspan="6" class="hint">No one is on the board yet. Be the first!</td></tr>';
+    h += '</tbody></table></div><p class="hint">This leaderboard is stored in this browser, so it ranks everyone who plays on this device. A shared online ranking needs a small server.</p>';
+    app.innerHTML = h;
+    wireAvatars(app);
+  }
+
+  /* ---------- profile (username + photo) ---------- */
+  function getUser() { return store.get('cc.user', { name: '', github: '', photo: '' }); }
+  function avatarHtml(u, size) {
+    var label = (u.name || u.github || '?').trim().charAt(0).toUpperCase() || '?';
+    var src = u.photo || (u.github ? 'https://github.com/' + encodeURIComponent(u.github) + '.png?size=' + (size * 2) : '');
+    var fb = '<span class="avatar-fb" style="width:' + size + 'px;height:' + size + 'px;font-size:' + Math.round(size * 0.45) + 'px">' + esc(label) + '</span>';
+    if (!src) return fb;
+    return '<img class="avatar" width="' + size + '" height="' + size + '" src="' + esc(src) + '" alt="" data-fb="' + esc(fb) + '">';
+  }
+  function wireAvatars(root) {
+    Array.prototype.forEach.call(root.querySelectorAll('img.avatar'), function (img) {
+      img.addEventListener('error', function () { img.outerHTML = img.getAttribute('data-fb'); });
+    });
+  }
+  function renderProfile() {
+    var btn = document.getElementById('profilebtn'), u = getUser();
+    var shown = u.name || (u.github ? '@' + u.github : '');
+    btn.innerHTML = avatarHtml(u, 28) + '<span class="uname">' + esc(shown || 'Set up profile') + '</span>';
+    btn.title = u.github ? 'GitHub: @' + u.github : 'Click to set your username and photo';
+    wireAvatars(btn);
+  }
+  function openProfile() {
+    var u = getUser(), photo = u.photo;
+    var ov = document.createElement('div');
+    ov.className = 'overlay';
+    ov.innerHTML = '<div class="modal" role="dialog" aria-label="Your profile"><h2>Your profile</h2>' +
+      '<div class="pickrow"><span id="pv"></span><div><input type="file" id="pfile" accept="image/*" hidden><button id="ppick">Upload photo</button> <button id="pclear">Remove</button>' +
+      '<div class="hint">Or leave it empty to use your GitHub photo.</div></div></div>' +
+      '<label for="pname">Display name</label><input type="text" id="pname" maxlength="30" placeholder="e.g. Somya" value="' + esc(u.name) + '">' +
+      '<label for="pgh">GitHub username</label><input type="text" id="pgh" maxlength="39" placeholder="e.g. somya26" value="' + esc(u.github) + '">' +
+      '<div class="btns"><button id="pcancel">Cancel</button><button class="primary" id="psave">Save</button></div></div>';
+    document.body.appendChild(ov);
+    var pv = ov.querySelector('#pv'), pname = ov.querySelector('#pname'), pgh = ov.querySelector('#pgh');
+    function preview() {
+      pv.innerHTML = avatarHtml({ name: pname.value, github: pgh.value.trim().replace(/^@/, ''), photo: photo }, 64);
+      wireAvatars(pv);
+    }
+    function close() { document.removeEventListener('keydown', onKey); ov.remove(); }
+    function onKey(e) { if (e.key === 'Escape') close(); }
+    document.addEventListener('keydown', onKey);
+    ov.addEventListener('pointerdown', function (e) { if (e.target === ov) close(); });
+    pname.addEventListener('input', preview);
+    pgh.addEventListener('change', preview);
+    ov.querySelector('#ppick').addEventListener('click', function () { ov.querySelector('#pfile').click(); });
+    ov.querySelector('#pclear').addEventListener('click', function () { photo = ''; preview(); });
+    ov.querySelector('#pfile').addEventListener('change', function (e) {
+      var f = e.target.files && e.target.files[0];
+      if (!f) return;
+      var img = new Image(), url = URL.createObjectURL(f);
+      img.onload = function () {
+        var c = document.createElement('canvas'), n = 128, s = Math.min(img.width, img.height);
+        c.width = c.height = n;
+        c.getContext('2d').drawImage(img, (img.width - s) / 2, (img.height - s) / 2, s, s, 0, 0, n, n);
+        photo = c.toDataURL('image/jpeg', 0.85);
+        URL.revokeObjectURL(url); preview();
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); alert('Could not read that image. Try a JPG or PNG.'); };
+      img.src = url;
+    });
+    ov.querySelector('#pcancel').addEventListener('click', close);
+    ov.querySelector('#psave').addEventListener('click', function () {
+      var nu = { name: pname.value.trim(), github: pgh.value.trim().replace(/^@/, ''), photo: photo };
+      var oldK = userKey(u), newK = userKey(nu);
+      stopTimer();
+      migrateUser(oldK, newK, nu);
+      store.set('cc.user', nu);
+      renderProfile(); close(); route();
+    });
+    preview(); pname.focus();
+  }
+  document.getElementById('profilebtn').addEventListener('click', openProfile);
+  renderProfile();
+
+  function route() {
+    stopTimer();
+    var hash = location.hash || '#/';
+    var m = hash.match(/^#\/p\/(.+)$/);
+    var p = m && PROBLEMS.filter(function (x) { return x.id === m[1]; })[0];
+    drag = null;
+    if (p) renderProblem(p);
+    else if (hash === '#/help') renderHelp();
+    else if (hash === '#/progress') renderProgress();
+    else if (hash === '#/leaderboard') renderLeaderboard();
+    else renderList();
+    var here = p ? '#/' : (['#/help', '#/progress', '#/leaderboard'].indexOf(hash) >= 0 ? hash : '#/');
+    Array.prototype.forEach.call(document.querySelectorAll('.top nav a'), function (a) { a.classList.toggle('active', a.getAttribute('href') === here); });
+    window.scrollTo(0, 0);
+  }
+  window.addEventListener('hashchange', route);
+  route();
+})();
+
+</script>
+</body>
+</html>

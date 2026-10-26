@@ -1,0 +1,55 @@
+{
+  "problem": "doorbell",
+  "title": "Doorbell",
+  "difficulty": "Medium",
+  "expected": {
+    "verdict": "Accepted",
+    "used": 3,
+    "score": 100
+  },
+  "circuit": {
+    "parts": [
+      {
+        "id": "BTN1",
+        "type": "BTN",
+        "x": 290,
+        "y": 80
+      },
+      {
+        "id": "BUZ1",
+        "type": "BUZ",
+        "x": 460,
+        "y": 80
+      },
+      {
+        "id": "RES1",
+        "type": "RES",
+        "x": 640,
+        "y": 80
+      }
+    ],
+    "wires": [
+      [
+        "BTN1.1",
+        "mcu.D2"
+      ],
+      [
+        "BTN1.2",
+        "mcu.GND"
+      ],
+      [
+        "mcu.D3",
+        "RES1.1"
+      ],
+      [
+        "RES1.2",
+        "BUZ1.A"
+      ],
+      [
+        "BUZ1.K",
+        "mcu.GND"
+      ]
+    ]
+  },
+  "code": "var last = HIGH;\n\nfunction setup() {\n  pinMode(2, INPUT_PULLUP);\n  pinMode(3, OUTPUT);\n}\n\nfunction loop() {\n  var r = digitalRead(2);\n  if (last === HIGH && r === LOW) {\n    for (var k = 0; k < 3; k++) {\n      digitalWrite(3, HIGH); delay(150);\n      digitalWrite(3, LOW); delay(150);\n    }\n    r = digitalRead(2);\n  }\n  last = r;\n  delay(1);\n}\n"
+}
