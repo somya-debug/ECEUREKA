@@ -1,0 +1,1853 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CircuitCode — practice hardware problems</title>
+<meta name="theme-color" content="#080D18">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  /* Circuit Dark — core surfaces */
+  --bg: #080D18; --panel: #111C2E; --panel2: #17243A; --panel3: #1B2A40;
+  --line: #26354B; --line2: #33465F;
+  /* text */
+  --text: #E8F0FC; --muted: #A5B3C8; --faint: #75849B;
+  /* brand + semantic */
+  --accent: #35D9FF;      /* electric cyan: primary actions, focus, active */
+  --accent2: #9B87FF;     /* signal violet: XP, achievements, stars */
+  --good: #42D6A4; --bad: #FF6B78; --warn: #FFCB70; --info: #35D9FF;
+  --easy: #42D6A4; --medium: #FFCB70; --hard: #FF6B78;
+  --glow-c: 0 0 0 1px rgba(53,217,255,.35), 0 0 16px rgba(53,217,255,.22);
+  --glow-g: 0 0 12px rgba(66,214,164,.28);
+  --glow-v: 0 0 12px rgba(155,135,255,.28);
+  --shadow: 0 8px 24px rgba(0,0,0,.35);
+  --r-card: 16px; --r-ctl: 10px; --r-sm: 6px;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --head: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --body: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --t: 180ms;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; color: var(--text); font: 15px/1.6 var(--body); background-color: var(--bg); }
+body {
+  background-image:
+    radial-gradient(ellipse at 12% -10%, rgba(53,217,255,.08), transparent 50%),
+    radial-gradient(ellipse at 100% 25%, rgba(155,135,255,.07), transparent 45%),
+    linear-gradient(rgba(165,179,200,.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(165,179,200,.035) 1px, transparent 1px);
+  background-size: auto, auto, 32px 32px, 32px 32px;
+  background-attachment: fixed;
+  min-height: 100vh;
+}
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+code { font-family: var(--mono); background: rgba(53,217,255,.08); color: #9BE8FF; padding: 1px 6px; border-radius: 5px; font-size: .88em; border: 1px solid rgba(53,217,255,.18); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+::selection { background: rgba(53,217,255,.3); }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--line2); border-radius: 6px; }
+
+/* top bar: floating glass toolbar (the one place glass is used) */
+.top { display: flex; align-items: center; gap: 14px; padding: 10px 24px; border-bottom: 1px solid var(--line); background: rgba(17,28,46,.82); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 5; flex-wrap: wrap; box-shadow: 0 8px 28px rgba(0,0,0,.35); }
+.top::after { content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 1px; background: linear-gradient(90deg, transparent, rgba(53,217,255,.55), transparent); opacity: .6; }
+.brand { color: var(--text); font: 700 19px var(--head); letter-spacing: .2px; display: flex; align-items: center; gap: 10px; }
+.brand:hover { text-decoration: none; }
+.brand b { color: var(--accent); font-weight: 700; }
+.logo { display: inline-flex; color: var(--accent); }
+.logo svg { width: 26px; height: 26px; }
+.tag { color: var(--faint); font: 11px var(--mono); letter-spacing: .3px; padding: 3px 10px; border: 1px solid var(--line); border-radius: 999px; }
+.tag::before { content: "● "; color: var(--good); animation: blink 2s infinite; }
+@keyframes blink { 50% { opacity: .35; } }
+.top .grow { flex: 1; }
+.top nav a { color: var(--muted); font: 500 13.5px var(--head); margin-left: 4px; padding: 7px 13px; border-radius: var(--r-ctl); border: 1px solid transparent; transition: all var(--t); }
+.top nav a:hover { color: var(--text); text-decoration: none; background: var(--panel2); }
+.top nav a.active { color: var(--accent); border-color: rgba(53,217,255,.4); background: rgba(53,217,255,.09); }
+main { max-width: 1280px; margin: 0 auto; padding: 28px 24px; }
+
+h1 { font: 700 32px/1.2 var(--head); letter-spacing: -.3px; margin: 0 0 6px; }
+h1::before { content: "// "; color: var(--accent); font-family: var(--mono); font-weight: 500; }
+h2 { font: 600 13px var(--head); letter-spacing: 1px; text-transform: uppercase; margin: 0 0 12px; color: var(--muted); }
+.sub { color: var(--muted); margin: 0 0 20px; }
+
+.chip { display: inline-block; font: 600 11px var(--mono); letter-spacing: .5px; padding: 2px 10px; border-radius: 6px; border: 1px solid currentColor; background: color-mix(in srgb, currentColor 10%, transparent); }
+.chip.Easy { color: var(--easy); } .chip.Medium { color: var(--medium); } .chip.Hard { color: var(--hard); }
+
+.banner { background: linear-gradient(135deg, rgba(53,217,255,.07), rgba(155,135,255,.05)); border: 1px solid var(--line2); border-radius: var(--r-card); padding: 20px 22px; margin-bottom: 22px; position: relative; box-shadow: var(--shadow); }
+.banner::before, .card::before { content: ""; position: absolute; top: -1px; left: -1px; width: 16px; height: 16px; border-top: 2px solid var(--accent); border-left: 2px solid var(--accent); border-radius: var(--r-card) 0 0 0; pointer-events: none; opacity: .8; }
+.banner h2 { font-size: 18px; text-transform: none; letter-spacing: 0; color: var(--text); margin-bottom: 4px; }
+.banner .x { position: absolute; top: 10px; right: 12px; padding: 2px 9px; background: transparent; border: 0; color: var(--muted); font-size: 18px; }
+.steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 16px; }
+@media (max-width: 800px) { .steps { grid-template-columns: 1fr; } }
+.step { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; }
+.step .n { display: inline-flex; width: 26px; height: 26px; border-radius: 8px; background: var(--accent); color: #04121A; font: 700 14px var(--mono); align-items: center; justify-content: center; margin-right: 10px; }
+.step b { font: 600 15px var(--head); }
+.step p { margin: 8px 0 0; color: var(--muted); font-size: 13.5px; }
+
+.toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 14px; }
+.toolbar .grow { flex: 1; }
+.fchip { border-radius: 8px; padding: 5px 16px; font: 500 13px var(--head); }
+.fchip.on { background: rgba(53,217,255,.12); border-color: var(--accent); color: var(--accent); }
+.progress { height: 10px; background: var(--panel); border-radius: 6px; overflow: hidden; margin: 0 0 20px; border: 1px solid var(--line); padding: 2px; }
+.progress i { display: block; height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width .4s; }
+
+.tablewrap { overflow-x: auto; border-radius: var(--r-card); }
+.list { width: 100%; border-collapse: collapse; background: rgba(17,28,46,.92); border: 1px solid var(--line); border-radius: var(--r-card); overflow: hidden; }
+.list th, .list td { text-align: left; padding: 13px 16px; border-bottom: 1px solid var(--line); }
+.list th { color: var(--faint); font: 600 11px var(--head); text-transform: uppercase; letter-spacing: 1px; background: var(--panel2); }
+.list tr:last-child td { border-bottom: 0; }
+.list tbody tr { cursor: pointer; transition: background var(--t), box-shadow var(--t); }
+.list tbody tr:hover { background: rgba(53,217,255,.06); box-shadow: inset 3px 0 0 var(--accent); }
+.list td:first-child { font-family: var(--mono); color: var(--faint); }
+.list td a { color: var(--text); font-weight: 600; }
+.stars { color: var(--accent2); letter-spacing: 2px; white-space: nowrap; }
+.stars .off { color: #2A3A52; }
+.solved { color: var(--good); }
+
+.problem { display: grid; grid-template-columns: 380px 1fr; gap: 20px; align-items: start; }
+@media (max-width: 1000px) { .problem { grid-template-columns: 1fr; } }
+.card { background: rgba(17,28,46,.96); border: 1px solid var(--line); border-radius: var(--r-card); padding: 18px 20px; position: relative; box-shadow: var(--shadow); }
+.card + .card { margin-top: 16px; }
+.card p { margin: 0 0 10px; }
+.parts-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+.parts-list span { background: var(--panel2); border: 1px solid var(--line2); padding: 3px 10px; border-radius: 6px; font: 12px var(--mono); color: var(--accent); }
+.subs { width: 100%; border-collapse: collapse; font: 12.5px var(--mono); }
+.subs td { padding: 6px 4px; border-top: 1px solid var(--line); }
+.v-ok { color: var(--good); font-weight: 600; } .v-bad { color: var(--bad); font-weight: 600; }
+.hints ol { margin: 0 0 10px; padding-left: 20px; }
+.hints li { margin-bottom: 6px; }
+
+.bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 10px; }
+.bar .grow { flex: 1; }
+button { font: 500 13px var(--head); cursor: pointer; border: 1px solid var(--line2); background: var(--panel2); color: var(--text); padding: 7px 14px; border-radius: var(--r-ctl); transition: all var(--t); }
+button:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); background: var(--panel3); }
+button:disabled { opacity: .4; cursor: not-allowed; }
+button.primary { background: var(--accent); color: #04121A; border-color: var(--accent); font-weight: 600; }
+button.primary:hover:not(:disabled) { color: #04121A; background: #5CE3FF; box-shadow: var(--glow-c); }
+button.green { background: transparent; color: var(--good); border-color: var(--good); font-weight: 600; }
+button.green:hover:not(:disabled) { color: #04140E; background: var(--good); border-color: var(--good); box-shadow: var(--glow-g); }
+button.danger { color: var(--bad); }
+button.danger:hover:not(:disabled) { border-color: var(--bad); color: var(--bad); box-shadow: 0 0 12px rgba(255,107,120,.3); }
+.count { color: var(--faint); font: 11px var(--mono); margin-left: 4px; }
+.kbd { font: 11px var(--mono); border: 1px solid var(--line2); border-bottom-width: 2px; border-radius: 5px; padding: 0 5px; color: var(--muted); background: var(--panel2); }
+
+svg.board { width: 100%; height: auto; border: 1px solid var(--line); border-radius: 14px; touch-action: none; user-select: none; display: block;
+  background-color: #0A1424;
+  background-image: radial-gradient(rgba(165,179,200,.22) 1px, transparent 1.4px), linear-gradient(rgba(53,217,255,.035) 1px, transparent 1px), linear-gradient(90deg, rgba(53,217,255,.035) 1px, transparent 1px);
+  background-size: 20px 20px, 20px 20px, 20px 20px;
+  box-shadow: inset 0 0 50px rgba(0,0,0,.45); }
+.board .mcu { fill: #0F1E33; stroke: var(--accent); stroke-width: 2; filter: drop-shadow(0 0 8px rgba(53,217,255,.22)); }
+.board .mcu-title { fill: var(--accent); font: 700 12px var(--mono); letter-spacing: 1px; }
+.board .pinlbl { fill: var(--text); font: 11px var(--mono); }
+.board .plbl { fill: var(--muted); font: 10px var(--mono); }
+.board .pin { cursor: crosshair; }
+.board .pin circle.dot { fill: #C8D4E8; stroke: #0A1424; stroke-width: 2; transition: all .12s; }
+.board .pin circle.pinhit { fill: transparent; stroke: none; }
+.board .pin:hover circle.dot { fill: var(--accent); filter: drop-shadow(0 0 6px var(--accent)); }
+.board .pin.pending circle.dot { fill: var(--accent); stroke: #fff; filter: drop-shadow(0 0 8px var(--accent)); }
+.board .pin.target circle.dot { stroke: var(--accent); }
+.board .part .body { stroke: #DCE6F7; stroke-width: 2; fill: none; }
+.board .part.sel .hit { fill: rgba(53,217,255,.09); stroke: var(--accent); stroke-dasharray: 4 3; }
+.board .part .hit { fill: transparent; cursor: grab; }
+.board .part .name { fill: var(--accent2); font: 11px var(--mono); text-anchor: middle; }
+.board .wire { fill: none; stroke-width: 3; stroke-linecap: round; opacity: .95; filter: drop-shadow(0 0 3px currentColor); }
+.board .wire-hit { fill: none; stroke: transparent; stroke-width: 14; cursor: pointer; }
+.board g.w:hover .wire { stroke-width: 5; opacity: 1; }
+.board g.w.sel .wire { stroke-width: 6; stroke-dasharray: 2 7; }
+.board .preview { fill: none; stroke: var(--accent); stroke-width: 2; stroke-dasharray: 5 4; pointer-events: none; }
+.hint { color: var(--faint); font-size: 12px; margin-top: 6px; }
+
+.status { margin-top: 10px; padding: 10px 14px; border-radius: 10px; background: var(--panel2); border: 1px solid var(--line); border-left: 3px solid var(--faint); font: 12.5px/1.5 var(--mono); }
+.status.info { border-left-color: var(--info); }
+.status.warn { border-left-color: var(--warn); color: #FFE0A8; }
+.status.ok { border-left-color: var(--good); color: #9BEBCF; }
+
+details.ref { margin-top: 10px; font-size: 13px; color: var(--muted); }
+details.ref summary { cursor: pointer; color: var(--accent); font-family: var(--mono); font-size: 12px; }
+details.ref table { margin-top: 8px; border-collapse: collapse; width: 100%; }
+details.ref td { padding: 5px 8px; border-top: 1px solid var(--line); vertical-align: top; }
+details.ref td:first-child { white-space: nowrap; }
+
+textarea.code { width: 100%; height: 280px; resize: vertical; background: #0B1322; color: #D5E3FA; border: 1px solid var(--line); border-radius: 12px; padding: 14px; font: 14px/1.65 var(--mono); tab-size: 2; outline: none; caret-color: var(--accent); box-shadow: inset 0 0 24px rgba(0,0,0,.4); transition: border-color var(--t), box-shadow var(--t); }
+textarea.code:focus { border-color: var(--accent); box-shadow: inset 0 0 24px rgba(0,0,0,.4), 0 0 0 3px rgba(53,217,255,.15); }
+
+.verdict { font: 700 26px var(--head); letter-spacing: -.2px; margin: 0 0 4px; }
+.verdict.ok { color: var(--good); } .verdict.bad { color: var(--bad); }
+.explain { color: var(--muted); margin: 0 0 8px; }
+.stats { display: flex; flex-wrap: wrap; gap: 26px; margin: 10px 0 16px; }
+.stat b { display: block; font: 700 24px var(--mono); color: var(--accent); }
+.stat span { color: var(--faint); font: 600 10.5px var(--head); text-transform: uppercase; letter-spacing: 1px; }
+.tests { list-style: none; margin: 0; padding: 0; }
+.tests li { padding: 9px 0; border-top: 1px solid var(--line); }
+.tests .ok { color: var(--good); } .tests .no { color: var(--bad); }
+.tests small { display: block; color: var(--muted); margin-left: 22px; font-family: var(--mono); font-size: 12px; }
+.warn { color: var(--warn); font-size: 13px; }
+.tline { width: 100%; height: auto; margin: 6px 0 2px 22px; max-width: calc(100% - 22px); }
+.tline text { fill: var(--muted); font: 10px var(--mono); }
+.tline .on { fill: var(--warn); } .tline .inp { fill: var(--accent); }
+.tline .track { fill: #0B1322; stroke: var(--line); stroke-width: .5; }
+
+.timer { display: inline-flex; align-items: center; gap: 8px; margin-left: 10px; padding: 2px 6px 2px 10px; border: 1px solid var(--line); border-radius: 10px; background: #0B1322; font: 13px var(--mono); vertical-align: middle; }
+.timer b { font-weight: 700; color: var(--muted); letter-spacing: 1px; }
+.timer.live b { color: var(--accent); }
+.tbtn { padding: 1px 9px; font-size: 11px; border-radius: 6px; }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 16px 0; }
+.cardstat { background: var(--panel2); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; border-top: 2px solid var(--accent); }
+.cardstat b { display: block; font: 700 24px var(--mono); color: var(--text); }
+.cardstat span { color: var(--faint); font: 600 10.5px var(--head); text-transform: uppercase; letter-spacing: 1px; }
+.chip.Solved { color: var(--good); } .chip.Progress { color: var(--warn); } .chip.New { color: var(--faint); }
+.list.static tbody tr { cursor: default; }
+.list tr.me { background: rgba(155,135,255,.09); box-shadow: inset 3px 0 0 var(--accent2); }
+.rankcell { font: 700 15px var(--mono); width: 70px; white-space: nowrap; }
+.player { display: flex; align-items: center; gap: 10px; }
+.activity { list-style: none; margin: 8px 0 0; padding: 0; font-size: 13.5px; }
+.activity li { padding: 7px 0; border-top: 1px solid var(--line); display: flex; gap: 10px; flex-wrap: wrap; }
+.activity .when { color: var(--faint); margin-left: auto; font-family: var(--mono); font-size: 12px; }
+
+.profilebtn { display: flex; align-items: center; gap: 8px; margin-left: 10px; padding: 3px 12px 3px 4px; border-radius: 999px; background: var(--panel2); }
+.profilebtn .uname { font: 500 13px var(--head); max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.avatar, .avatar-fb { border-radius: 50%; display: inline-flex; flex: none; object-fit: cover; }
+.avatar-fb { background: var(--accent2); color: #120C33; font-weight: 700; align-items: center; justify-content: center; }
+.overlay { position: fixed; inset: 0; background: rgba(5,9,18,.72); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center; z-index: 20; padding: 16px; }
+.modal { background: rgba(23,36,58,.94); border: 1px solid var(--line2); border-radius: var(--r-card); padding: 22px; width: 100%; max-width: 380px; box-shadow: 0 20px 60px rgba(0,0,0,.5); }
+.modal h2 { font-size: 15px; color: var(--text); }
+.modal label { display: block; font: 600 11px var(--head); letter-spacing: 1px; text-transform: uppercase; color: var(--muted); margin: 14px 0 4px; }
+.modal input[type=text] { width: 100%; padding: 9px 11px; border-radius: var(--r-ctl); border: 1px solid var(--line2); background: #0B1322; color: var(--text); font: 14px var(--mono); }
+.modal input[type=text]:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px rgba(53,217,255,.15); }
+.modal .pickrow { display: flex; align-items: center; gap: 14px; margin-top: 4px; }
+.modal .btns { display: flex; gap: 8px; justify-content: flex-end; margin-top: 18px; }
+@media (max-width: 600px) { .top .tag { display: none; } .profilebtn .uname { max-width: 80px; } }
+
+.guide h2 { margin-top: 24px; font-size: 14px; }
+.guide ul { margin: 6px 0 10px; padding-left: 20px; }
+.guide li { margin-bottom: 4px; }
+
+.bgchip { position: fixed; top: 64px; right: -70px; width: min(560px, 46vw); color: var(--accent); opacity: .05; z-index: 0; pointer-events: none; transform: rotate(6deg); transform-origin: top right; }
+.bgchip svg { width: 100%; height: auto; display: block; }
+main, header.top { position: relative; z-index: 1; }
+header.top { position: sticky; }
+@media (max-width: 700px) { .bgchip { opacity: .035; right: -140px; } }
+@media print { .bgchip { display: none; } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+
+.chip.NearlyImpossible { color: var(--accent2); box-shadow: var(--glow-v); }
+.chip.NearlyImpossible::before { content: "☠ "; }
+</style>
+</head>
+<body>
+<div class="bgchip" aria-hidden="true"><svg viewBox="0 0 520 780" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="60" y="70" width="400" height="690" rx="26"/><circle cx="92" cy="102" r="9"/><circle cx="92" cy="102" r="3"/><circle cx="428" cy="102" r="9"/><circle cx="428" cy="102" r="3"/><circle cx="92" cy="728" r="9"/><circle cx="92" cy="728" r="3"/><circle cx="428" cy="728" r="9"/><circle cx="428" cy="728" r="3"/><rect x="190" y="8" width="140" height="104" rx="6"/><rect x="206" y="24" width="108" height="64" rx="3"/><line x1="206" y1="56" x2="314" y2="56"/><rect x="76" y="164" width="12" height="12" rx="2"/><rect x="432" y="164" width="12" height="12" rx="2"/><rect x="76" y="188" width="12" height="12" rx="2"/><rect x="432" y="188" width="12" height="12" rx="2"/><rect x="76" y="212" width="12" height="12" rx="2"/><rect x="432" y="212" width="12" height="12" rx="2"/><rect x="76" y="236" width="12" height="12" rx="2"/><rect x="432" y="236" width="12" height="12" rx="2"/><rect x="76" y="260" width="12" height="12" rx="2"/><rect x="432" y="260" width="12" height="12" rx="2"/><rect x="76" y="284" width="12" height="12" rx="2"/><rect x="432" y="284" width="12" height="12" rx="2"/><rect x="76" y="308" width="12" height="12" rx="2"/><rect x="432" y="308" width="12" height="12" rx="2"/><rect x="76" y="332" width="12" height="12" rx="2"/><rect x="432" y="332" width="12" height="12" rx="2"/><rect x="76" y="356" width="12" height="12" rx="2"/><rect x="432" y="356" width="12" height="12" rx="2"/><rect x="76" y="380" width="12" height="12" rx="2"/><rect x="432" y="380" width="12" height="12" rx="2"/><rect x="76" y="404" width="12" height="12" rx="2"/><rect x="432" y="404" width="12" height="12" rx="2"/><rect x="76" y="428" width="12" height="12" rx="2"/><rect x="432" y="428" width="12" height="12" rx="2"/><rect x="76" y="452" width="12" height="12" rx="2"/><rect x="432" y="452" width="12" height="12" rx="2"/><rect x="76" y="476" width="12" height="12" rx="2"/><rect x="432" y="476" width="12" height="12" rx="2"/><rect x="76" y="500" width="12" height="12" rx="2"/><rect x="432" y="500" width="12" height="12" rx="2"/><rect x="76" y="524" width="12" height="12" rx="2"/><rect x="432" y="524" width="12" height="12" rx="2"/><rect x="76" y="548" width="12" height="12" rx="2"/><rect x="432" y="548" width="12" height="12" rx="2"/><rect x="76" y="572" width="12" height="12" rx="2"/><rect x="432" y="572" width="12" height="12" rx="2"/><rect x="76" y="596" width="12" height="12" rx="2"/><rect x="432" y="596" width="12" height="12" rx="2"/><rect x="76" y="620" width="12" height="12" rx="2"/><rect x="432" y="620" width="12" height="12" rx="2"/><rect x="76" y="644" width="12" height="12" rx="2"/><rect x="432" y="644" width="12" height="12" rx="2"/><rect x="76" y="668" width="12" height="12" rx="2"/><rect x="432" y="668" width="12" height="12" rx="2"/><rect x="76" y="692" width="12" height="12" rx="2"/><rect x="432" y="692" width="12" height="12" rx="2"/><rect x="170" y="330" width="180" height="180" rx="8"/><circle cx="192" cy="352" r="6"/><text x="260.0" y="426.0" text-anchor="middle" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="22" stroke="none" fill="currentColor">MCU</text><line x1="184.0" y1="330" x2="184.0" y2="316"/><line x1="184.0" y1="510" x2="184.0" y2="524"/><line x1="170" y1="344.0" x2="156" y2="344.0"/><line x1="350" y1="344.0" x2="364" y2="344.0"/><line x1="197.8181818181818" y1="330" x2="197.8181818181818" y2="316"/><line x1="197.8181818181818" y1="510" x2="197.8181818181818" y2="524"/><line x1="170" y1="357.8181818181818" x2="156" y2="357.8181818181818"/><line x1="350" y1="357.8181818181818" x2="364" y2="357.8181818181818"/><line x1="211.63636363636363" y1="330" x2="211.63636363636363" y2="316"/><line x1="211.63636363636363" y1="510" x2="211.63636363636363" y2="524"/><line x1="170" y1="371.6363636363636" x2="156" y2="371.6363636363636"/><line x1="350" y1="371.6363636363636" x2="364" y2="371.6363636363636"/><line x1="225.45454545454544" y1="330" x2="225.45454545454544" y2="316"/><line x1="225.45454545454544" y1="510" x2="225.45454545454544" y2="524"/><line x1="170" y1="385.45454545454544" x2="156" y2="385.45454545454544"/><line x1="350" y1="385.45454545454544" x2="364" y2="385.45454545454544"/><line x1="239.27272727272728" y1="330" x2="239.27272727272728" y2="316"/><line x1="239.27272727272728" y1="510" x2="239.27272727272728" y2="524"/><line x1="170" y1="399.27272727272725" x2="156" y2="399.27272727272725"/><line x1="350" y1="399.27272727272725" x2="364" y2="399.27272727272725"/><line x1="253.0909090909091" y1="330" x2="253.0909090909091" y2="316"/><line x1="253.0909090909091" y1="510" x2="253.0909090909091" y2="524"/><line x1="170" y1="413.0909090909091" x2="156" y2="413.0909090909091"/><line x1="350" y1="413.0909090909091" x2="364" y2="413.0909090909091"/><line x1="266.9090909090909" y1="330" x2="266.9090909090909" y2="316"/><line x1="266.9090909090909" y1="510" x2="266.9090909090909" y2="524"/><line x1="170" y1="426.9090909090909" x2="156" y2="426.9090909090909"/><line x1="350" y1="426.9090909090909" x2="364" y2="426.9090909090909"/><line x1="280.72727272727275" y1="330" x2="280.72727272727275" y2="316"/><line x1="280.72727272727275" y1="510" x2="280.72727272727275" y2="524"/><line x1="170" y1="440.72727272727275" x2="156" y2="440.72727272727275"/><line x1="350" y1="440.72727272727275" x2="364" y2="440.72727272727275"/><line x1="294.54545454545456" y1="330" x2="294.54545454545456" y2="316"/><line x1="294.54545454545456" y1="510" x2="294.54545454545456" y2="524"/><line x1="170" y1="454.54545454545456" x2="156" y2="454.54545454545456"/><line x1="350" y1="454.54545454545456" x2="364" y2="454.54545454545456"/><line x1="308.3636363636364" y1="330" x2="308.3636363636364" y2="316"/><line x1="308.3636363636364" y1="510" x2="308.3636363636364" y2="524"/><line x1="170" y1="468.3636363636364" x2="156" y2="468.3636363636364"/><line x1="350" y1="468.3636363636364" x2="364" y2="468.3636363636364"/><line x1="322.1818181818182" y1="330" x2="322.1818181818182" y2="316"/><line x1="322.1818181818182" y1="510" x2="322.1818181818182" y2="524"/><line x1="170" y1="482.1818181818182" x2="156" y2="482.1818181818182"/><line x1="350" y1="482.1818181818182" x2="364" y2="482.1818181818182"/><line x1="336.0" y1="330" x2="336.0" y2="316"/><line x1="336.0" y1="510" x2="336.0" y2="524"/><line x1="170" y1="496.0" x2="156" y2="496.0"/><line x1="350" y1="496.0" x2="364" y2="496.0"/><polyline points="156,357.8181818181818 120,357.8181818181818 120,218 88,218"/><polyline points="364,371.6363636363636 400,371.6363636363636 400,242 432,242"/><polyline points="156,385.45454545454544 113,385.45454545454544 113,290 88,290"/><polyline points="364,399.27272727272725 407,399.27272727272725 407,314 432,314"/><polyline points="156,413.0909090909091 106,413.0909090909091 106,362 88,362"/><polyline points="364,426.9090909090909 414,426.9090909090909 414,386 432,386"/><polyline points="156,440.72727272727275 99,440.72727272727275 99,434 88,434"/><polyline points="364,454.54545454545456 421,454.54545454545456 421,458 432,458"/><polyline points="156,468.3636363636364 92,468.3636363636364 92,506 88,506"/><polyline points="364,482.1818181818182 428,482.1818181818182 428,530 432,530"/><polyline points="230,316 230,150 250,150 250,112"/><polyline points="270,316 270,150 290,150 290,112"/><polyline points="210,524 210,590"/><polyline points="310,524 310,590"/><rect x="200" y="590" width="120" height="44" rx="22"/><text x="260" y="618" text-anchor="middle" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="14" stroke="none" fill="currentColor">16.000</text><rect x="150" y="660" width="22" height="12" rx="2"/><line x1="161" y1="660" x2="161" y2="640"/><rect x="350" y="660" width="22" height="12" rx="2"/><line x1="361" y1="660" x2="361" y2="640"/><rect x="206" y="680" width="48" height="14" rx="2"/><rect x="266" y="680" width="48" height="14" rx="2"/><circle cx="200" cy="720" r="7"/><circle cx="260" cy="720" r="7"/><circle cx="320" cy="720" r="7"/><polyline points="235,150 235,160 105,160"/></svg></div>
+<header class="top">
+  <a class="brand" href="#/"><span class="logo"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="8" width="16" height="16" rx="2"/><path d="M12 4v4M16 4v4M20 4v4M12 24v4M16 24v4M20 24v4M4 12h4M4 16h4M4 20h4M24 12h4M24 16h4M24 20h4"/><path d="M13 17l2 2 4-5" /></svg></span>Circuit<b>Code</b></a>
+  <span class="tag">SIM ONLINE · judge runs in your browser</span>
+  <span class="grow"></span>
+  <nav><a href="#/">Problems</a><a href="#/progress">My Progress</a><a href="#/leaderboard">Leaderboard</a><a href="#/help">How it works</a></nav>
+  <button id="profilebtn" class="profilebtn" aria-label="Edit profile"></button>
+</header>
+<main id="app"></main>
+
+<script>
+'use strict';
+/*
+ * judge.js — deterministic hardware judge (prototype)
+ *
+ * Pipeline:  circuit (netlist) + firmware (JS with Arduino API) + hidden tests  ->  verdict + score
+ *
+ * Circuit model (digital level):
+ *   - wires merge pins into nets (union-find)
+ *   - resistors and pressed buttons are edges between nets
+ *   - 5V and driven-HIGH pins are "H" sources, GND and driven-LOW pins are "L" sources
+ *   - an LED/buzzer is ON when its anode is reachable from H and its cathode from L
+ *   - it BURNS if both sides are reachable with no resistor in the path
+ *   - H and L meeting through zero resistance is a SHORT
+ *
+ * This file runs in the browser (inside a Web Worker built from toString()) and in Node (tests).
+ * Keep judge() and pressedAt() self-contained: they are stringified into the worker.
+ */
+
+// ---- input model: when is the (single) button pressed at time t (ms)? ----------------------
+// spec = { windows: [[start,end], ...], bounce: ms, seg: ms }   (bounce = contact chatter length)
+function pressedAt(spec, t) {
+  if (!spec) return false;
+  var windows = spec.windows || [], bounce = spec.bounce || 0, seg = spec.seg || 2;
+  for (var i = 0; i < windows.length; i++) {
+    var s = windows[i][0], e = windows[i][1];
+    if (t >= s && t < e + bounce) {
+      if (t < s + bounce) return Math.floor((t - s) / seg) % 2 === 0;   // press chatter
+      if (t < e) return true;                                          // steady press
+      return Math.floor((t - e) / seg) % 2 === 0;                      // release chatter
+    }
+  }
+  return false;
+}
+
+function scoreFor(used, ref) {
+  if (used <= 0) return 0;
+  return Math.min(100, Math.round((ref / used) * 100));
+}
+function ratingFor(score) { return score >= 100 ? 3 : score >= 70 ? 2 : 1; }
+
+// ---- the judge ------------------------------------------------------------------------------
+function judge(job) {
+  var circuit = job.circuit || { parts: [], wires: [] };
+  var code = job.code || '';
+  var tests = job.tests || [];
+  var limits = job.limits || {};
+  var parts = circuit.parts || [], wires = circuit.wires || [];
+
+  var res = { verdict: 'Accepted', issues: [], warnings: [], tests: [], used: parts.length };
+
+  // 1. component limits -----------------------------------------------------------------------
+  var counts = {};
+  parts.forEach(function (p) { counts[p.type] = (counts[p.type] || 0) + 1; });
+  Object.keys(counts).forEach(function (type) {
+    var allowed = limits[type] || 0;
+    if (counts[type] > allowed) {
+      res.verdict = 'Invalid Circuit';
+      res.issues.push('Too many ' + type + ': ' + counts[type] + ' used, ' + allowed + ' allowed');
+    }
+  });
+  if (res.verdict !== 'Accepted') return res;
+
+  // 2. netlist --------------------------------------------------------------------------------
+  var parent = {};
+  function find(k) {
+    if (parent[k] === undefined) parent[k] = k;
+    while (parent[k] !== k) { parent[k] = parent[parent[k]]; k = parent[k]; }
+    return k;
+  }
+  wires.forEach(function (w) { parent[find(w[0])] = find(w[1]); });
+
+  var PINS = { LED: ['A', 'K'], BUZ: ['A', 'K'], RES: ['1', '2'], BTN: ['1', '2'] };
+  var wired = {};
+  wires.forEach(function (w) { wired[w[0]] = 1; wired[w[1]] = 1; });
+  parts.forEach(function (p) {
+    (PINS[p.type] || []).forEach(function (pn) {
+      if (!wired[p.id + '.' + pn]) res.warnings.push(p.id + ' pin ' + pn + ' is not connected');
+    });
+  });
+
+  var loads = [], resEdges = [], btnEdges = [];
+  parts.forEach(function (p) {
+    if (p.type === 'LED' || p.type === 'BUZ') loads.push({ id: p.id, a: find(p.id + '.A'), k: find(p.id + '.K') });
+    if (p.type === 'RES') resEdges.push({ a: find(p.id + '.1'), b: find(p.id + '.2'), r: true });
+    if (p.type === 'BTN') btnEdges.push({ a: find(p.id + '.1'), b: find(p.id + '.2'), r: false });
+  });
+
+  // reach(): which nets can a set of source nets reach, and with zero resistance (noR)?
+  function reach(sources, edges) {
+    var m = new Map();
+    function set(n, noR) {
+      var c = m.get(n);
+      if (!c) { m.set(n, { noR: noR }); return true; }
+      if (noR && !c.noR) { c.noR = true; return true; }
+      return false;
+    }
+    sources.forEach(function (n) { set(n, true); });
+    var changed = true;
+    while (changed) {
+      changed = false;
+      for (var i = 0; i < edges.length; i++) {
+        var e = edges[i], s;
+        if ((s = m.get(e.a)) && set(e.b, e.r ? false : s.noR)) changed = true;
+        if ((s = m.get(e.b)) && set(e.a, e.r ? false : s.noR)) changed = true;
+      }
+    }
+    return m;
+  }
+
+  // 3. firmware compile -----------------------------------------------------------------------
+  var API = ['pinMode', 'digitalWrite', 'digitalRead', 'delay', 'millis', 'Serial', 'HIGH', 'LOW', 'INPUT', 'OUTPUT', 'INPUT_PULLUP'];
+  var BLOCKED = ['fetch', 'XMLHttpRequest', 'importScripts', 'postMessage', 'self', 'globalThis', 'WebSocket', 'indexedDB', 'localStorage', 'document', 'window'];
+  var factory;
+  try {
+    factory = new Function(API.concat(BLOCKED).join(','),
+      code + '\n;return { setup: typeof setup === "function" ? setup : null, loop: typeof loop === "function" ? loop : null };');
+  } catch (e) {
+    res.verdict = 'Compile Error';
+    res.issues.push(String(e && e.message || e));
+    return res;
+  }
+
+  // 4. run every test -------------------------------------------------------------------------
+  function runTest(t) {
+    var check = (new Function('return (' + t.check + ')'))();
+    var duration = t.duration;
+    var mode = {}, val = {}, usedPins = {};            // pin name -> mode / output value
+    var time = 0, ops = 0, ver = 0;
+    var snaps = [], reads = {}, logs = [], floating = null, error = null;
+    var cache = null;
+
+    function solve(pressed) {
+      if (cache && cache.ver === ver && cache.pressed === pressed) return cache;
+      var hs = [find('mcu.5V')], ls = [find('mcu.GND')];
+      Object.keys(mode).forEach(function (p) {
+        if (mode[p] === 'OUTPUT') (val[p] ? hs : ls).push(find('mcu.' + p));
+      });
+      var edges = pressed ? resEdges.concat(btnEdges) : resEdges;
+      cache = { ver: ver, pressed: pressed, h: reach(hs, edges), l: reach(ls, edges) };
+      return cache;
+    }
+
+    function snapshot() {
+      var s = solve(pressedAt(t.input, time));
+      var leds = {}, burned = [], short = false, pins = {};
+      loads.forEach(function (ld) {
+        var a = s.h.get(ld.a), k = s.l.get(ld.k), on = !!(a && k);
+        leds[ld.id] = on;
+        if (on && a.noR && k.noR) burned.push(ld.id);
+      });
+      s.h.forEach(function (hv, n) { var lv = s.l.get(n); if (lv && hv.noR && lv.noR) short = true; });
+      Object.keys(mode).forEach(function (p) { if (mode[p] === 'OUTPUT') pins[p] = val[p] ? 1 : 0; });
+      var key = JSON.stringify([leds, burned, short, pins]);
+      var last = snaps[snaps.length - 1];
+      if (!last || last.key !== key) snaps.push({ t: time, leds: leds, burned: burned, short: short, pins: pins, key: key });
+    }
+
+    function advance(ms) {
+      var rem = ms;
+      while (rem > 0) {
+        var step = Math.min(rem, 1);
+        var before = pressedAt(t.input, time);
+        time += step; rem -= step;
+        if (pressedAt(t.input, time) !== before) snapshot();
+      }
+    }
+    function op() { if (++ops > 1500000) throw new Error('Too many operations (infinite loop without delay()?)'); }
+    function pinName(p) {
+      if (typeof p !== 'number' || p < 2 || p > 13 || p % 1) throw new Error('Invalid pin ' + p + ' (use 2..13)');
+      usedPins['D' + p] = 1;
+      return 'D' + p;
+    }
+
+    var api = {
+      pinMode: function (p, m) { op(); var n = pinName(p); mode[n] = m; if (m !== 'OUTPUT') delete val[n]; else val[n] = 0; ver++; advance(0.01); snapshot(); },
+      digitalWrite: function (p, v) {
+        op(); var n = pinName(p);
+        if (mode[n] === 'OUTPUT') { val[n] = v ? 1 : 0; ver++; }
+        advance(0.01); snapshot();
+      },
+      digitalRead: function (p) {
+        op(); var n = pinName(p); reads[n] = 1; advance(0.01);
+        if (mode[n] === 'OUTPUT') return val[n];
+        var s = solve(pressedAt(t.input, time)), net = find('mcu.' + n);
+        if (s.l.has(net)) return 0;
+        if (s.h.has(net)) return 1;
+        if (mode[n] === 'INPUT_PULLUP') return 1;
+        if (!floating) floating = n;
+        return 0;
+      },
+      delay: function (ms) { op(); advance(Math.max(0, +ms || 0)); snapshot(); },
+      millis: function () { op(); advance(0.01); return Math.floor(time); },
+      Serial: {
+        begin: function () {},
+        print: function (x) { logs.push(String(x)); },
+        println: function (x) { logs.push(String(x)); }
+      },
+      HIGH: 1, LOW: 0, INPUT: 'INPUT', OUTPUT: 'OUTPUT', INPUT_PULLUP: 'INPUT_PULLUP'
+    };
+
+    try {
+      var prog = factory.apply(null, API.map(function (k) { return api[k]; }));
+      snapshot();
+      if (prog.setup) prog.setup();
+      var idle = 0;
+      while (time < duration) {
+        if (!prog.loop) { advance(duration - time); break; }
+        var t0 = time;
+        prog.loop();
+        if (time === t0) { if (++idle >= 3) { advance(duration - time); break; } } else idle = 0;
+      }
+      snapshot();
+    } catch (e) {
+      error = String(e && e.message || e);
+    }
+
+    // helpers handed to the hidden check functions
+    function at(tm) {
+      var s = snaps[0];
+      for (var i = 0; i < snaps.length; i++) { if (snaps[i].t <= tm) s = snaps[i]; else break; }
+      return s;
+    }
+    var ids = loads.map(function (l) { return l.id; });
+    // pieces of the run where one LED is on/off, clipped to [a,b]
+    function segs(id, a, b) {
+      var out = [];
+      for (var i = 0; i < snaps.length; i++) {
+        var s0 = snaps[i].t, s1 = i + 1 < snaps.length ? snaps[i + 1].t : duration;
+        var x = Math.max(a, s0), y = Math.min(b, s1);
+        if (y > x) out.push([!!snaps[i].leds[id], x, y]);
+      }
+      return out;
+    }
+    var H = {
+      ids: ids,
+      on: function (id, tm) { return !!at(tm).leds[id]; },
+      anyOn: function (tm) { return ids.some(function (i) { return at(tm).leds[i]; }); },
+      lit: function (tm) { var l = ids.filter(function (i) { return at(tm).leds[i]; }); return l.length ? l.join('+') : 'none'; },
+      count: function (tm) { return ids.filter(function (i) { return at(tm).leds[i]; }).length; },
+      pin: function (p, tm) { return at(tm).pins['D' + p] || 0; },
+      read: function (p) { return !!reads['D' + p]; },
+      logs: logs,
+      used: function () { return Object.keys(usedPins).map(function (k) { return +k.slice(1); }).sort(function (a, b) { return a - b; }); },
+      duty: function (id, a, b) { var on = 0; segs(id, a, b).forEach(function (s) { if (s[0]) on += s[2] - s[1]; }); return on / (b - a); },
+      gap: function (id, a, b) { var worst = 0, run = 0; segs(id, a, b).forEach(function (s) { if (s[0]) run = 0; else { run += s[2] - s[1]; if (run > worst) worst = run; } }); return worst; }
+    };
+
+    var pass = true, message = '', kind = '';
+    if (error) {
+      pass = false; message = 'Runtime error: ' + error;
+      kind = /Too many operations/.test(error) ? 'Time Limit Exceeded' : 'Runtime Error';
+    } else {
+      var burn = snaps.filter(function (s) { return s.burned.length; })[0];
+      var sh = snaps.filter(function (s) { return s.short; })[0];
+      if (sh) { pass = false; kind = 'Wrong Answer'; message = 'Short circuit at t=' + Math.round(sh.t) + 'ms: a supply path reaches ground with no resistance.'; }
+      else if (burn) { pass = false; kind = 'Wrong Answer'; message = burn.burned.join(', ') + ' burned out at t=' + Math.round(burn.t) + 'ms: no current-limiting resistor.'; }
+      else if (floating) { pass = false; kind = 'Wrong Answer'; message = 'D' + floating.slice(1) + ' was read while floating. Add a pull-up/pull-down or use INPUT_PULLUP.'; }
+      else {
+        var m;
+        try { m = check(H); } catch (e) { m = 'Checker error: ' + e.message; }
+        if (m) { pass = false; kind = 'Wrong Answer'; message = t.hidden ? 'Failed a hidden test case.' : String(m); }
+      }
+    }
+
+    // LED on-intervals for the timeline view
+    var tl = {};
+    ids.forEach(function (id) {
+      var iv = [], start = null;
+      snaps.forEach(function (s) {
+        if (s.leds[id] && start === null) start = s.t;
+        if (!s.leds[id] && start !== null) { iv.push([start, s.t]); start = null; }
+      });
+      if (start !== null) iv.push([start, duration]);
+      tl[id] = iv;
+    });
+
+    return { name: t.name, hidden: !!t.hidden, pass: pass, kind: kind, message: message, timeline: { duration: duration, leds: tl, input: t.input || null } };
+  }
+
+  tests.forEach(function (t) { res.tests.push(runTest(t)); });
+  var failed = res.tests.filter(function (r) { return !r.pass; })[0];
+  if (failed) res.verdict = failed.kind || 'Wrong Answer';
+  return res;
+}
+
+if (typeof module !== 'undefined') module.exports = { judge: judge, pressedAt: pressedAt, scoreFor: scoreFor, ratingFor: ratingFor };
+
+;
+'use strict';
+/*
+ * problems.js — problem bank.
+ *
+ * Each problem:
+ *   limits : max parts of each type the student may place (LED, RES, BTN, BUZ)
+ *   ref    : component count of the best-known solution (score = ref / used, capped at 100)
+ *   hints  : optional list of progressive hints shown on request (UI only, never sent to the judge)
+ *   tests  : { name, hidden, duration(ms), input(button timeline), check(H) }
+ *            check() gets the helper object H from judge.js and returns null on success
+ *            or a string explaining the failure. check() must be self-contained.
+ *
+ * In production, hidden tests and reference solutions live on the server only.
+ */
+var PROBLEMS = [
+  {
+    id: 'hello-led',
+    title: 'Hello, LED',
+    difficulty: 'Easy',
+    ref: 2,
+    limits: { LED: 1, RES: 1 },
+    statement: [
+      'Light an LED and keep it lit.',
+      'Build the circuit with the parts provided, then write firmware that turns the LED on. **Any** digital pin (2–13) may drive it.',
+      'Remember: an LED needs a current-limiting resistor, or it burns out.'
+    ],
+    hints: [
+      'An LED has two legs: the **anode (A, +)** and the **cathode (K, −)**. Current must flow from A to K.',
+      'Build one path: a digital pin → resistor → LED anode, then LED cathode → **GND**.',
+      'In `setup()`, call `pinMode(pin, OUTPUT)` and then `digitalWrite(pin, HIGH)`, using the pin you wired.'
+    ],
+    starter: 'function setup() {\n  // configure pins here\n}\n\nfunction loop() {\n  // runs forever\n}\n',
+    tests: [
+      { name: 'LED is lit', duration: 1500, input: null,
+        check: function (H) { var ts = [100, 700, 1400]; for (var i = 0; i < ts.length; i++) if (!H.anyOn(ts[i])) return 'The LED is off at t=' + ts[i] + 'ms.'; return null; } },
+      { name: 'Stays lit', hidden: true, duration: 6000, input: null,
+        check: function (H) { return H.anyOn(5900) && H.anyOn(3000) ? null : 'x'; } }
+    ]
+  },
+  {
+    id: 'blink-1hz',
+    title: 'Blink at 1 Hz',
+    difficulty: 'Easy',
+    ref: 2,
+    limits: { LED: 1, RES: 1 },
+    statement: [
+      'Make an LED blink: **on for 500 ms, off for 500 ms**, repeating forever.',
+      'Timing is checked with a few milliseconds of tolerance.'
+    ],
+    hints: [
+      'The circuit is the same as in *Hello, LED*.',
+      'Put the blinking code in `loop()`, because `setup()` only runs once.',
+      'Pattern: `digitalWrite(pin, HIGH)`, `delay(500)`, `digitalWrite(pin, LOW)`, `delay(500)`.'
+    ],
+    starter: 'function setup() {\n  \n}\n\nfunction loop() {\n  \n}\n',
+    tests: [
+      { name: 'Blinks on/off', duration: 3200, input: null,
+        check: function (H) {
+          var exp = [[250, 1], [750, 0], [1250, 1], [1750, 0]];
+          for (var i = 0; i < exp.length; i++) if (H.anyOn(exp[i][0]) !== !!exp[i][1]) return 'Expected LED ' + (exp[i][1] ? 'ON' : 'OFF') + ' at t=' + exp[i][0] + 'ms.';
+          return null;
+        } },
+      { name: 'Timing accuracy', hidden: true, duration: 6200, input: null,
+        check: function (H) {
+          for (var k = 0; k < 5; k++) {
+            var s = k * 1000;
+            if (!H.anyOn(s + 30) || !H.anyOn(s + 470) || H.anyOn(s + 530) || H.anyOn(s + 970)) return 'x';
+          }
+          return null;
+        } }
+    ]
+  },
+  {
+    id: 'button-light',
+    title: 'Button Light',
+    difficulty: 'Easy',
+    ref: 3,
+    limits: { LED: 1, RES: 1, BTN: 1 },
+    statement: [
+      'The LED must be on **only while the button is held**.',
+      'Read the button from pin `2` in your firmware — a circuit that powers the LED straight through the button will not be accepted.',
+      'Tip: `pinMode(2, INPUT_PULLUP)` enables the internal pull-up, so the button only needs to connect pin 2 to GND (pressed = `LOW`).'
+    ],
+    hints: [
+      'Wire the button between **D2** and **GND**. The LED + resistor go on a different pin, as in *Hello, LED*.',
+      'In `setup()`: `pinMode(2, INPUT_PULLUP)` for the button and `pinMode(ledPin, OUTPUT)` for the LED.',
+      'In `loop()`: when `digitalRead(2) === LOW` the button is pressed, so write HIGH to the LED pin, otherwise LOW.'
+    ],
+    starter: 'function setup() {\n  \n}\n\nfunction loop() {\n  \n}\n',
+    tests: [
+      { name: 'Follows the button', duration: 3000, input: { windows: [[1000, 2000]] },
+        check: function (H) {
+          if (!H.read(2)) return 'Your firmware never reads pin 2.';
+          if (H.anyOn(500)) return 'LED should be OFF before the button is pressed (t=500ms).';
+          if (!H.anyOn(1500)) return 'LED should be ON while the button is held (t=1500ms).';
+          if (H.anyOn(2500)) return 'LED should turn OFF after release (t=2500ms).';
+          return null;
+        } },
+      { name: 'Short presses, fast response', hidden: true, duration: 3000,
+        input: { windows: [[507, 547], [1013, 1053], [1507, 2507]] },
+        check: function (H) {
+          var on = [527, 1033, 2000], off = [300, 800, 1300, 2800];
+          for (var i = 0; i < on.length; i++) if (!H.anyOn(on[i])) return 'x';
+          for (var j = 0; j < off.length; j++) if (H.anyOn(off[j])) return 'x';
+          return null;
+        } }
+    ]
+  },
+  {
+    id: 'alternate',
+    title: 'Alternating LEDs',
+    difficulty: 'Medium',
+    ref: 3,
+    limits: { LED: 2, RES: 2 },
+    statement: [
+      'Two LEDs must **alternate**: LED A on for 250 ms while LED B is off, then swap, forever.',
+      'Exactly one LED is lit at any moment (ignore sub-millisecond switching).',
+      'You are given two resistors, but a clever layout needs fewer. Fewer components = a higher score.'
+    ],
+    hints: [
+      'Start with a simple version that works (two LEDs, two resistors, two pins), then try to remove a part.',
+      'A pin can be a source (HIGH) or a sink (LOW). What if the two LEDs share the same two pins and swap roles?',
+      'Try placing the two LEDs facing **opposite directions** between two pins, with a single resistor in the path. Flip both pins every 250 ms.'
+    ],
+    starter: 'function setup() {\n  \n}\n\nfunction loop() {\n  \n}\n',
+    tests: [
+      { name: 'LEDs alternate', duration: 3000, input: null,
+        check: function (H) {
+          if (H.ids.length < 2) return 'Place two LEDs.';
+          var prev = null;
+          for (var k = 0; k < 10; k++) {
+            var tm = 125 + 250 * k;
+            if (H.count(tm) !== 1) return 'Exactly one LED must be lit at t=' + tm + 'ms (found ' + H.count(tm) + ').';
+            var cur = H.lit(tm);
+            if (prev !== null && cur === prev) return 'The LEDs must swap every 250ms (t=' + tm + 'ms).';
+            prev = cur;
+          }
+          return null;
+        } },
+      { name: 'Switch timing', hidden: true, duration: 4000, input: null,
+        check: function (H) {
+          for (var k = 1; k < 12; k++) {
+            var e = 250 * k;
+            var a = H.lit(e - 15), b = H.lit(e + 15);
+            if (a === 'none' || b === 'none' || a === b) return 'x';
+            if (H.lit(e - 125) !== a || H.lit(e + 125) !== b) return 'x';
+          }
+          return null;
+        } }
+    ]
+  },
+  {
+    id: 'toggle-debounce',
+    title: 'Toggle with Debounce',
+    difficulty: 'Hard',
+    ref: 3,
+    limits: { LED: 1, RES: 1, BTN: 1 },
+    statement: [
+      'Each button press must **toggle** the LED (press once = on, press again = off). Holding the button must not toggle repeatedly.',
+      'Real buttons *bounce*: for a few milliseconds the contact chatters between pressed and released. The judge simulates this, including on release, with different chatter lengths in the hidden tests.',
+      'Read the button on pin `2`. The LED can use any pin.'
+    ],
+    hints: [
+      'The circuit is the same as *Button Light*.',
+      'Remember the LED state in a variable, and toggle it only on the moment the button **goes from released to pressed**, not while it is held.',
+      'After you detect an edge, `delay()` about 30–50 ms so the chatter passes, then wait until the button is released before looking for the next press.'
+    ],
+    starter: 'function setup() {\n  \n}\n\nfunction loop() {\n  \n}\n',
+    tests: [
+      { name: 'Toggles on each press', duration: 4000,
+        input: { windows: [[1000, 1300], [2000, 2300], [3000, 3300]], bounce: 12, seg: 2 },
+        check: function (H) {
+          if (!H.read(2)) return 'Your firmware never reads pin 2.';
+          var exp = [[900, 0], [1500, 1], [2500, 0], [3500, 1]];
+          for (var i = 0; i < exp.length; i++) if (H.anyOn(exp[i][0]) !== !!exp[i][1]) return 'Expected LED ' + (exp[i][1] ? 'ON' : 'OFF') + ' at t=' + exp[i][0] + 'ms.';
+          return null;
+        } },
+      { name: 'Different bounce, quick taps', hidden: true, duration: 3200,
+        input: { windows: [[500, 600], [900, 1400], [1700, 1750], [2500, 2900]], bounce: 20, seg: 3 },
+        check: function (H) {
+          var exp = [[450, 0], [800, 1], [1200, 0], [2000, 1], [2800, 0]];
+          for (var i = 0; i < exp.length; i++) if (H.anyOn(exp[i][0]) !== !!exp[i][1]) return 'x';
+          return null;
+        } },
+      { name: 'Long hold toggles once', hidden: true, duration: 3500,
+        input: { windows: [[500, 2500]], bounce: 10, seg: 2 },
+        check: function (H) {
+          if (H.anyOn(400) || !H.anyOn(1000) || !H.anyOn(2000) || !H.anyOn(3200)) return 'x';
+          return null;
+        } }
+    ]
+  },
+  {
+    id: 'ping-pong',
+    title: 'Ping-Pong Chase',
+    difficulty: 'Medium',
+    ref: 4,
+    limits: { LED: 3, RES: 3 },
+    statement: [
+      'Three LEDs chase back and forth, **one lit at a time, 200 ms each**: A, B, C, B, A, B, C, B, A... (A and C are the two ends, B is the middle). Repeat forever.',
+      'You may use three pins, one per LED. You are given three resistors, but an LED only needs a resistor *somewhere* in its path. Fewer parts = higher score.'
+    ],
+    hints: [
+      'First get a version working with three LEDs, three resistors and three pins. Then try to remove resistors.',
+      'Only one LED is ever lit at a time, so the LEDs can **share** a single resistor to GND.',
+      'Join all three cathodes (K) together, run **one** resistor from that joint to GND, and give each anode its own pin. In `loop()` raise one pin at a time: 3, 4, 5, 4, ...'
+    ],
+    starter: 'function setup() {\n  \n}\n\nfunction loop() {\n  \n}\n',
+    tests: [
+      { name: 'Sweeps back and forth', duration: 2500, input: null,
+        check: function (H) {
+          if (H.ids.length < 3) return 'Place three LEDs.';
+          var seq = [];
+          for (var k = 0; k < 12; k++) {
+            var tm = 100 + 200 * k;
+            if (H.count(tm) !== 1) return 'Exactly one LED must be lit at t=' + tm + 'ms (found ' + H.count(tm) + ').';
+            seq.push(H.lit(tm));
+          }
+          if (seq[0] === seq[1] || seq[1] === seq[2] || seq[0] === seq[2]) return 'The first three steps must light three different LEDs (end, middle, other end).';
+          var order = [seq[0], seq[1], seq[2], seq[1]];
+          for (var j = 3; j < seq.length; j++) {
+            if (seq[j] !== order[j % 4]) return 'At t=' + (100 + 200 * j) + 'ms expected ' + order[j % 4] + ' but ' + seq[j] + ' is lit. The sweep must bounce back: A, B, C, B, A, B...';
+          }
+          return null;
+        } },
+      { name: 'Timing accuracy', hidden: true, duration: 4200, input: null,
+        check: function (H) {
+          var first = H.lit(15), mid = H.lit(215), last = H.lit(415);
+          if (first === 'none' || first === mid || mid === last || first === last) return 'x';
+          var order = [first, mid, last, mid];
+          for (var k = 0; k < 20; k++) {
+            var offs = [15, 185];
+            for (var i = 0; i < 2; i++) {
+              var tm = 200 * k + offs[i];
+              if (H.count(tm) !== 1 || H.lit(tm) !== order[k % 4]) return 'x';
+            }
+          }
+          return null;
+        } }
+    ]
+  },
+  {
+    id: 'binary-counter',
+    title: 'Binary Counter',
+    difficulty: 'Medium',
+    ref: 4,
+    limits: { LED: 2, RES: 2, BTN: 1 },
+    statement: [
+      'Count button presses in binary on two LEDs. **LED1 is bit 0** (least significant) and **LED2 is bit 1**. After *n* presses the LEDs show *n* mod 4, so the display goes 00 → 01 → 10 → 11 → 00...',
+      'Count a press the moment the button goes **down**, and count each press only once even if it is held. Read the button on pin `2`.',
+      'Some presses in the hidden tests are very short, so do not sleep for long inside `loop()`.'
+    ],
+    hints: [
+      'Wire the button between **D2** and **GND** and use `INPUT_PULLUP`. Give each LED its own pin.',
+      'Keep `count` and `last` (the previous reading) in variables. A press is the moment `last` was HIGH and the new reading is LOW.',
+      'Write the bits with `digitalWrite(3, count & 1)` and `digitalWrite(4, count & 2 ? HIGH : LOW)`. Both LEDs can share a single resistor to GND.'
+    ],
+    starter: 'function setup() {\n  \n}\n\nfunction loop() {\n  \n}\n',
+    tests: [
+      { name: 'Counts presses', duration: 3600,
+        input: { windows: [[500, 700], [1000, 1200], [1500, 1700], [2000, 2200], [2500, 2700], [3000, 3200]] },
+        check: function (H) {
+          if (!H.read(2)) return 'Your firmware never reads pin 2.';
+          if (H.ids.length < 2) return 'Place two LEDs.';
+          var starts = [500, 1000, 1500, 2000, 2500, 3000];
+          var samples = [[300, 0]];
+          for (var k = 1; k <= 6; k++) { samples.push([starts[k - 1] + 100, k % 4]); samples.push([starts[k - 1] + 350, k % 4]); }
+          for (var i = 0; i < samples.length; i++) {
+            var v = (H.on('LED1', samples[i][0]) ? 1 : 0) + (H.on('LED2', samples[i][0]) ? 2 : 0);
+            if (v !== samples[i][1]) return 'At t=' + samples[i][0] + 'ms the LEDs show ' + v + ' but should show ' + samples[i][1] + ' (LED1 = bit 0, LED2 = bit 1).';
+          }
+          return null;
+        } },
+      { name: 'Quick taps and wrap-around', hidden: true, duration: 2600,
+        input: { windows: [[313, 348], [641, 676], [957, 992], [1277, 1312], [1583, 1618], [1871, 1906]] },
+        check: function (H) {
+          if (!H.read(2)) return 'x';
+          var starts = [0, 313, 641, 957, 1277, 1583, 1871];
+          for (var k = 0; k <= 6; k++) {
+            var tm = k === 0 ? 150 : starts[k] + 100;
+            var v = (H.on('LED1', tm) ? 1 : 0) + (H.on('LED2', tm) ? 2 : 0);
+            if (v !== k % 4) return 'x';
+          }
+          return null;
+        } },
+      { name: 'Long hold counts once', hidden: true, duration: 3000,
+        input: { windows: [[300, 1700], [2000, 2060]] },
+        check: function (H) {
+          var exp = [[200, 0], [1000, 1], [1650, 1], [1900, 1], [2300, 2], [2900, 2]];
+          for (var i = 0; i < exp.length; i++) {
+            var v = (H.on('LED1', exp[i][0]) ? 1 : 0) + (H.on('LED2', exp[i][0]) ? 2 : 0);
+            if (v !== exp[i][1]) return 'x';
+          }
+          return null;
+        } }
+    ]
+  },
+  {
+    id: 'doorbell',
+    title: 'Doorbell',
+    difficulty: 'Medium',
+    ref: 3,
+    limits: { BUZ: 1, RES: 1, BTN: 1 },
+    statement: [
+      'Build a doorbell. Each press of the button rings the buzzer with **three beeps**: 150 ms on, 150 ms off, three times. Then it goes quiet and waits for the next press.',
+      'The first beep must start right away (within about 20 ms of the press), even for a very short tap. Holding the button down must **not** ring it again. Read the button on pin `2`.',
+      'A buzzer is wired like an LED (+ to the pin side, − to GND), and it needs a current-limiting resistor too.'
+    ],
+    hints: [
+      'Button between **D2** and **GND** with `INPUT_PULLUP`. Buzzer + resistor on another pin, as with an LED.',
+      'Do not ring while the button is *down*. Ring when it **goes** down: the previous reading was HIGH and the new one is LOW.',
+      'When you detect the press, run a `for` loop: `digitalWrite(pin, HIGH)`, `delay(150)`, `digitalWrite(pin, LOW)`, `delay(150)`, three times. Then store the new reading in `last`.'
+    ],
+    starter: 'function setup() {\n  \n}\n\nfunction loop() {\n  \n}\n',
+    tests: [
+      { name: 'Three beeps per press', duration: 2200, input: { windows: [[500, 700]] },
+        check: function (H) {
+          if (!H.read(2)) return 'Your firmware never reads pin 2.';
+          if (H.anyOn(300)) return 'The buzzer should be silent before the button is pressed (t=300ms).';
+          for (var k = 0; k < 3; k++) {
+            var on = 500 + 300 * k + 75, off = 500 + 300 * k + 225;
+            if (!H.anyOn(on)) return 'Beep ' + (k + 1) + ' is missing: the buzzer should be ON at t=' + on + 'ms.';
+            if (H.anyOn(off)) return 'The buzzer should be OFF between beeps (t=' + off + 'ms).';
+          }
+          if (H.anyOn(1600) || H.anyOn(1900)) return 'The buzzer should be silent after the three beeps.';
+          return null;
+        } },
+      { name: 'Quick tap, then a long press', hidden: true, duration: 3700, input: { windows: [[300, 330], [2000, 2400]] },
+        check: function (H) {
+          var starts = [300, 2000];
+          for (var i = 0; i < 2; i++) {
+            for (var k = 0; k < 3; k++) {
+              var b = starts[i] + 300 * k;
+              if (!H.anyOn(b + 20) || !H.anyOn(b + 130) || H.anyOn(b + 170) || H.anyOn(b + 280)) return 'x';
+            }
+          }
+          if (H.anyOn(200) || H.anyOn(1500) || H.anyOn(1800) || H.anyOn(3100) || H.anyOn(3500)) return 'x';
+          return null;
+        } },
+      { name: 'Holding rings only once', hidden: true, duration: 3600, input: { windows: [[500, 2500]] },
+        check: function (H) {
+          for (var k = 0; k < 3; k++) {
+            var b = 500 + 300 * k;
+            if (!H.anyOn(b + 20) || !H.anyOn(b + 130) || H.anyOn(b + 170) || H.anyOn(b + 280)) return 'x';
+          }
+          var quiet = [1600, 1900, 2200, 2450, 2600, 3000, 3400];
+          for (var j = 0; j < quiet.length; j++) if (H.anyOn(quiet[j])) return 'x';
+          return null;
+        } }
+    ]
+  },
+  {
+    id: 'three-leds-two-pins',
+    title: 'Three LEDs, Two Pins',
+    difficulty: 'Hard',
+    ref: 5,
+    limits: { LED: 3, RES: 3 },
+    statement: [
+      'Light three LEDs **one after another, 300 ms each**, repeating forever. Exactly one LED is lit at any moment, and every LED gets a turn.',
+      'The catch: your firmware may only touch **two pins, 2 and 3**. The 5V and GND rails are free to use, and they are not pins.',
+      'You are given three resistors. The best known solution uses only two.'
+    ],
+    hints: [
+      'With two pins you cannot give each LED its own pin. A pin can be HIGH, LOW, or disconnected (`INPUT`), which is three states per pin.',
+      'One pin can drive two LEDs that face opposite ways: one from the pin to GND (lit when the pin is HIGH) and one from 5V to the pin (lit when the pin is LOW).',
+      'Put a resistor between each pin and its LEDs. Pin 2 drives two LEDs this way (HIGH, then LOW). The third LED goes from pin 3 to GND. While it is lit, set pin 2 to `INPUT` so neither of its LEDs conducts.'
+    ],
+    starter: 'function setup() {\n  \n}\n\nfunction loop() {\n  \n}\n',
+    tests: [
+      { name: 'LEDs take turns', duration: 2500, input: null,
+        check: function (H) {
+          if (H.ids.length < 3) return 'Place three LEDs.';
+          var u = H.used();
+          for (var i = 0; i < u.length; i++) if (u[i] !== 2 && u[i] !== 3) return 'Your firmware touched pin ' + u[i] + '. Only pins 2 and 3 are allowed.';
+          var seq = [];
+          for (var k = 0; k < 8; k++) {
+            var tm = 150 + 300 * k;
+            if (H.count(tm) !== 1) return 'Exactly one LED must be lit at t=' + tm + 'ms (found ' + H.count(tm) + ').';
+            seq.push(H.lit(tm));
+          }
+          if (seq[0] === seq[1] || seq[1] === seq[2] || seq[0] === seq[2]) return 'All three LEDs must take a turn before the pattern repeats.';
+          for (var j = 3; j < seq.length; j++) if (seq[j] !== seq[j - 3]) return 'The order must repeat every three steps (t=' + (150 + 300 * j) + 'ms).';
+          return null;
+        } },
+      { name: 'Switch timing', hidden: true, duration: 3800, input: null,
+        check: function (H) {
+          var u = H.used();
+          for (var i = 0; i < u.length; i++) if (u[i] !== 2 && u[i] !== 3) return 'x';
+          for (var k = 1; k < 12; k++) {
+            var e = 300 * k;
+            if (H.count(e - 15) !== 1 || H.count(e + 15) !== 1) return 'x';
+            if (H.lit(e - 15) === H.lit(e + 15)) return 'x';
+            if (H.lit(e - 150) !== H.lit(e - 15) || H.lit(e + 150) !== H.lit(e + 15)) return 'x';
+            if (k >= 3 && H.lit(e + 15) !== H.lit(e - 885)) return 'x';
+          }
+          return null;
+        } }
+    ]
+  },
+  {
+    id: 'short-long',
+    title: 'Short Press, Long Press',
+    difficulty: 'Hard',
+    ref: 4,
+    limits: { LED: 2, RES: 2, BTN: 1 },
+    statement: [
+      'One button, two LEDs. A **short press** (under 500 ms) toggles **LED1**. A **long press** (500 ms or more) toggles **LED2**. Decide when the button is **released**.',
+      'Each press must toggle exactly one LED, once. Pressing and releasing a bouncy button must not toggle anything extra.',
+      'The button bounces on both press **and** release, and the hidden tests use different bounce lengths. Read the button on pin `2`. Presses are never close to the 500 ms line, so you do not need to be exact.'
+    ],
+    hints: [
+      'The circuit is the same as *Binary Counter*: a button from **D2** to GND, two LEDs on two other pins.',
+      'Note `millis()` when you first see the button go down. When it comes back up, `millis() - startedAt` is how long it was held.',
+      'Wait about 40 ms after each edge so the bounce settles. On release, confirm the button is still released after the wait, then compare the duration with 500.'
+    ],
+    starter: 'function setup() {\n  \n}\n\nfunction loop() {\n  \n}\n',
+    tests: [
+      { name: 'Short toggles LED1, long toggles LED2', duration: 5600,
+        input: { windows: [[1000, 1200], [2000, 2900], [3500, 3650], [4200, 5000]], bounce: 10, seg: 2 },
+        check: function (H) {
+          if (!H.read(2)) return 'Your firmware never reads pin 2.';
+          if (H.ids.length < 2) return 'Place two LEDs.';
+          var exp = [[500, 0, 0], [1500, 1, 0], [3200, 1, 1], [3900, 0, 1], [5300, 0, 0]];
+          for (var i = 0; i < exp.length; i++) {
+            var a = H.on('LED1', exp[i][0]), b = H.on('LED2', exp[i][0]);
+            if (a !== !!exp[i][1] || b !== !!exp[i][2]) return 'At t=' + exp[i][0] + 'ms expected LED1 ' + (exp[i][1] ? 'ON' : 'OFF') + ' and LED2 ' + (exp[i][2] ? 'ON' : 'OFF') + '.';
+          }
+          return null;
+        } },
+      { name: 'Different bounce, mixed presses', hidden: true, duration: 5000,
+        input: { windows: [[400, 460], [1000, 1700], [2200, 2500], [3000, 3700], [4200, 4300]], bounce: 20, seg: 3 },
+        check: function (H) {
+          var exp = [[300, 0, 0], [800, 1, 0], [2000, 1, 1], [2900, 0, 1], [3950, 0, 0], [4700, 1, 0]];
+          for (var i = 0; i < exp.length; i++) {
+            if (H.on('LED1', exp[i][0]) !== !!exp[i][1] || H.on('LED2', exp[i][0]) !== !!exp[i][2]) return 'x';
+          }
+          return null;
+        } },
+      { name: 'Very long hold toggles once', hidden: true, duration: 4600,
+        input: { windows: [[500, 3500]], bounce: 8, seg: 2 },
+        check: function (H) {
+          if (H.on('LED1', 300) || H.on('LED2', 300)) return 'x';
+          if (H.on('LED1', 3800) || !H.on('LED2', 3800) || H.on('LED1', 4500) || !H.on('LED2', 4500)) return 'x';
+          return null;
+        } }
+    ]
+  },
+  {
+    id: 'charlie-six',
+    title: "Charlie's Six",
+    difficulty: 'Nearly Impossible',
+    ref: 9,
+    limits: { LED: 6, RES: 3, BTN: 1 },
+    statement: [
+      'Six LEDs, but the firmware may only use **pins 2, 3 and 4 for the LEDs**. The button goes on pin `5` (use `INPUT_PULLUP`).',
+      'Build a tiny display with three patterns. **A:** LED1, LED3 and LED5 lit at the same time (the rest dark). **B:** LED2, LED4 and LED6 lit. **C:** all six lit. The display starts on **A**, and each button press moves on to the next pattern: A, B, C, A, B, C...',
+      'The judge watches every LED over time. A lit LED must be on at least **12%** of the time and never dark for more than **12 ms** (steady to the eye). An LED that should be off may be on at most 3% of the time.',
+      'The display must keep refreshing while the button is held, bouncing or being debounced. A frozen display fails. Two resistors are enough, and three are allowed.'
+    ],
+    hints: [
+      'A pin can be HIGH, LOW, or disconnected (`INPUT`). With three pins that gives **six** distinct "one LED on" states, one for every ordered pair of pins. Put an LED between each pair of pins, in both directions.',
+      'Three LEDs lit "at the same time" means **multiplexing**: light one LED, `delay(1)`, light the next, and so on, over and over. Your eyes blend it into steady light. For pattern C, step through all six.',
+      'Two pins joined directly by an LED with no resistor in the path burns it, so at least two of the three pin nodes need a resistor. Read the button inside the scanning loop and debounce it with `millis()`. Never wait for the button with `delay()` or a `while` loop, or the display will flicker.'
+    ],
+    starter: 'function setup() {\n  \n}\n\nfunction loop() {\n  \n}\n',
+    tests: [
+      { name: 'Pattern A is steady', duration: 1000, input: null,
+        check: function (H) {
+          if (H.ids.length < 6) return 'Place all six LEDs.';
+          if (!H.read(5)) return 'Your firmware never reads pin 5 (the button).';
+          var u = H.used();
+          for (var i = 0; i < u.length; i++) if (u[i] < 2 || u[i] > 5) return 'Pin ' + u[i] + ' is not allowed. Use pins 2, 3, 4 for the LEDs and pin 5 for the button.';
+          var want = [1, 3, 5];
+          for (var k = 1; k <= 6; k++) {
+            var id = 'LED' + k, d = H.duty(id, 100, 1000);
+            if (want.indexOf(k) >= 0) {
+              if (d < 0.12) return id + ' should be lit but is on only ' + Math.round(d * 100) + '% of the time.';
+              if (H.gap(id, 100, 1000) > 12) return id + ' flickers: it is dark for ' + Math.round(H.gap(id, 100, 1000)) + ' ms at a stretch.';
+            } else if (d > 0.03) return id + ' should be dark but is on ' + Math.round(d * 100) + '% of the time.';
+          }
+          return null;
+        } },
+      { name: 'Button cycles A, B, C', duration: 4200,
+        input: { windows: [[1000, 1100], [2000, 2100], [3000, 3100]], bounce: 6, seg: 2 },
+        check: function (H) {
+          if (H.ids.length < 6) return 'Place all six LEDs.';
+          var plan = [['A', [1, 3, 5], 100, 900], ['B', [2, 4, 6], 1300, 1900], ['C', [1, 2, 3, 4, 5, 6], 2300, 2900], ['A', [1, 3, 5], 3300, 4100]];
+          for (var p = 0; p < plan.length; p++) {
+            for (var k = 1; k <= 6; k++) {
+              var id = 'LED' + k, d = H.duty(id, plan[p][2], plan[p][3]);
+              if (plan[p][1].indexOf(k) >= 0) {
+                if (d < 0.12) return 'Pattern ' + plan[p][0] + ': ' + id + ' should be lit but is on only ' + Math.round(d * 100) + '% of the time.';
+                if (H.gap(id, plan[p][2], plan[p][3]) > 12) return 'Pattern ' + plan[p][0] + ': ' + id + ' flickers (dark for ' + Math.round(H.gap(id, plan[p][2], plan[p][3])) + ' ms).';
+              } else if (d > 0.03) return 'Pattern ' + plan[p][0] + ': ' + id + ' should be dark but is on ' + Math.round(d * 100) + '% of the time.';
+            }
+          }
+          return null;
+        } },
+      { name: 'Display keeps running while held', hidden: true, duration: 3200,
+        input: { windows: [[500, 2500]], bounce: 8, seg: 2 },
+        check: function (H) {
+          var plan = [[[1, 3, 5], 100, 450], [[2, 4, 6], 700, 3100]];
+          for (var p = 0; p < plan.length; p++) {
+            for (var k = 1; k <= 6; k++) {
+              var id = 'LED' + k, d = H.duty(id, plan[p][1], plan[p][2]);
+              if (plan[p][0].indexOf(k) >= 0) { if (d < 0.12 || H.gap(id, plan[p][1], plan[p][2]) > 12) return 'x'; }
+              else if (d > 0.03) return 'x';
+            }
+          }
+          return null;
+        } },
+      { name: 'No flicker through a press', hidden: true, duration: 2000,
+        input: { windows: [[500, 560], [1000, 1060]], bounce: 10, seg: 3 },
+        check: function (H) {
+          var plan = [[[1, 3, 5], 100, 450], [[2, 4, 6], 700, 950], [[1, 2, 3, 4, 5, 6], 1300, 1900]];
+          for (var p = 0; p < plan.length; p++) {
+            for (var k = 1; k <= 6; k++) {
+              var id = 'LED' + k, d = H.duty(id, plan[p][1], plan[p][2]);
+              if (plan[p][0].indexOf(k) >= 0) { if (d < 0.12 || H.gap(id, plan[p][1], plan[p][2]) > 12) return 'x'; }
+              else if (d > 0.03) return 'x';
+            }
+          }
+          for (var q = 2; q <= 6; q += 2) if (H.gap('LED' + q, 700, 1950) > 12) return 'x';
+          return null;
+        } }
+    ]
+  }
+];
+
+// keep the list sorted by difficulty (stable)
+var DIFF_ORDER = { 'Easy': 0, 'Medium': 1, 'Hard': 2, 'Nearly Impossible': 3 };
+PROBLEMS = PROBLEMS.map(function (p, i) { return { p: p, i: i }; }).sort(function (a, b) { return DIFF_ORDER[a.p.difficulty] - DIFF_ORDER[b.p.difficulty] || a.i - b.i; }).map(function (x) { return x.p; });
+
+if (typeof module !== 'undefined') module.exports = { PROBLEMS: PROBLEMS };
+
+;
+'use strict';
+(function () {
+  var app = document.getElementById('app');
+
+  /* ---------- helpers ---------- */
+  var store = {
+    get: function (k, d) { try { var v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
+    set: function (k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  };
+  function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function md(s) { return esc(s).replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>').replace(/\*([^*]+)\*/g, '<i>$1</i>'); }
+  function dcls(d) { return String(d).replace(/\s+/g, ''); }
+  function stars(n) { var s = ''; for (var i = 1; i <= 3; i++) s += i <= n ? '★' : '<span class="off">★</span>'; return '<span class="stars">' + s + '</span>'; }
+  var IS_MAC = /Mac|iPhone|iPad/.test(navigator.platform || '');
+  var MOD = IS_MAC ? '⌘' : 'Ctrl';
+
+  var VERDICT_HELP = {
+    'Accepted': 'All tests passed. Nice work!',
+    'Wrong Answer': 'Your circuit and code ran, but the behaviour did not match what the problem asks. Check the failing test below.',
+    'Invalid Circuit': 'You used more parts than the problem allows. Delete some parts and try again.',
+    'Compile Error': 'Your firmware has a syntax mistake. Check brackets, commas and spelling.',
+    'Runtime Error': 'Your firmware crashed while running. Read the message below.',
+    'Time Limit Exceeded': 'Your firmware never gave control back. A loop without delay() is a common cause.'
+  };
+
+  /* ---------- submissions ---------- */
+  function userKey(u) { u = u || getUser(); var k = (u.github || u.name || '').trim().toLowerCase(); return k || 'guest'; }
+  function allSubs() { return store.get('cc.subs', []); }
+  function mySubs() { var k = userKey(); return allSubs().filter(function (s) { return (s.user || 'guest') === k; }); }
+  function bestFor(pid) {
+    var best = null;
+    mySubs().forEach(function (s) {
+      if (s.pid === pid && s.verdict === 'Accepted' &&
+        (!best || s.score > best.score || (s.score === best.score && (s.time || 1e12) < (best.time || 1e12)))) best = s;
+    });
+    return best;
+  }
+  function fmtTime(ms) {
+    var s = Math.max(0, Math.floor(ms / 1000)), h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), x = s % 60;
+    function p(n) { return (n < 10 ? '0' : '') + n; }
+    return (h ? h + ':' + p(m) : p(m)) + ':' + p(x);
+  }
+
+  /* ---------- part definitions & geometry ---------- */
+  var PART_DEFS = {
+    LED: { label: 'LED', pins: { A: [-28, 0], K: [28, 0] }, pl: { A: 'A', K: 'K' }, pn: { A: 'anode (+)', K: 'cathode (−)' } },
+    RES: { label: 'Resistor', pins: { '1': [-28, 0], '2': [28, 0] }, pl: { '1': '1', '2': '2' }, pn: { '1': 'pin 1', '2': 'pin 2' } },
+    BTN: { label: 'Push button', pins: { '1': [-28, 0], '2': [28, 0] }, pl: { '1': '1', '2': '2' }, pn: { '1': 'pin 1', '2': 'pin 2' } },
+    BUZ: { label: 'Buzzer', pins: { A: [-28, 0], K: [28, 0] }, pl: { A: '+', K: '−' }, pn: { A: '+ (anode)', K: '− (cathode)' } }
+  };
+  var MCU_PINS = ['D2', 'D3', 'D4', 'D5', 'D6', 'D7', 'D8', 'D9', 'D10', 'D11', 'D12', 'D13', '5V', 'GND'];
+  var MCU_X = 150, MCU_Y0 = 62, MCU_DY = 24;
+  var WIRE_COLORS = ['#35D9FF', '#9B87FF', '#42D6A4', '#FFCB70', '#7FB2FF', '#5EEAD4', '#FF8F9A'];
+
+  function partBody(type) {
+    switch (type) {
+      case 'LED': return '<polyline class="body" points="-28,0 -10,0"/><polygon class="body" points="-10,-12 -10,12 10,0"/><polyline class="body" points="10,-12 10,12"/><polyline class="body" points="10,0 28,0"/>' +
+        '<polyline class="body" points="2,-14 8,-22" style="stroke:#FFCB70"/><polyline class="body" points="8,-14 14,-22" style="stroke:#FFCB70"/>';
+      case 'RES': return '<polyline class="body" points="-28,0 -16,0 -12,-8 -6,8 0,-8 6,8 12,-8 16,0 28,0"/>';
+      case 'BTN': return '<polyline class="body" points="-28,0 -10,0"/><polyline class="body" points="-10,0 10,-13"/><polyline class="body" points="10,0 28,0"/><polyline class="body" points="-4,-18 4,-18" /><polyline class="body" points="0,-18 0,-10"/>';
+      case 'BUZ': return '<polyline class="body" points="-28,0 -14,0"/><circle class="body" r="14" cx="0" cy="0"/><polyline class="body" points="14,0 28,0"/><text x="0" y="5" text-anchor="middle" style="fill:#E8F0FC;font:14px sans-serif">♪</text>';
+    }
+    return '';
+  }
+
+  /* ---------- editor state ---------- */
+  var S = null, drag = null, board = null;
+
+  function mcuPinPos(name) { return [MCU_X, MCU_Y0 + MCU_PINS.indexOf(name) * MCU_DY]; }
+  function partById(id) { return S.parts.filter(function (p) { return p.id === id; })[0]; }
+  function pinPos(key) {
+    var i = key.indexOf('.'), owner = key.slice(0, i), pin = key.slice(i + 1);
+    if (owner === 'mcu') return mcuPinPos(pin);
+    var p = partById(owner), d = PART_DEFS[p.type].pins[pin];
+    return [p.x + d[0], p.y + d[1]];
+  }
+  function friendly(key) {
+    var i = key.indexOf('.'), owner = key.slice(0, i), pin = key.slice(i + 1);
+    if (owner === 'mcu') return 'Arduino ' + pin;
+    var p = partById(owner);
+    return owner + ' ' + (p ? (PART_DEFS[p.type].pn[pin] || pin) : pin);
+  }
+  function countType(t) { return S.parts.filter(function (p) { return p.type === t; }).length; }
+  function nextId(t) { var n = 1; while (partById(t + n)) n++; return t + n; }
+
+  function save() { store.set('cc.p.' + S.problem.id, { parts: S.parts, wires: S.wires, code: S.code }); }
+
+  /* undo history (circuit only) */
+  function snap() {
+    S.hist.push(JSON.stringify({ parts: S.parts, wires: S.wires }));
+    if (S.hist.length > 50) S.hist.shift();
+  }
+  function undo() {
+    if (!S || !S.hist.length) return;
+    var o = JSON.parse(S.hist.pop());
+    S.parts = o.parts; S.wires = o.wires; S.sel = null; S.selWire = null; S.pending = null;
+    changed();
+  }
+
+  function statusInfo() {
+    if (S.pending) return { cls: 'info', html: 'Connecting from <b>' + esc(friendly(S.pending)) + '</b>. Now click the pin you want to join it to. (<span class="kbd">Esc</span> cancels)' };
+    if (S.selWire !== null) return { cls: 'info', html: 'Wire selected. Press <span class="kbd">Delete</span> or the <b>Delete</b> button to remove it.' };
+    if (S.sel) return { cls: 'info', html: '<b>' + esc(S.sel) + '</b> selected. Drag it to move it, or press <span class="kbd">Delete</span> to remove it.' };
+    if (!S.parts.length) return { cls: 'info', html: '<b>Step 1:</b> add the parts you need with the buttons above the board.' };
+    if (!S.wires.length) return { cls: 'info', html: '<b>Step 2:</b> connect them. Click one pin, then click another pin to draw a wire.' };
+    var loose = [];
+    S.parts.forEach(function (p) {
+      var def = PART_DEFS[p.type];
+      Object.keys(def.pins).forEach(function (pn) {
+        var key = p.id + '.' + pn;
+        var used = S.wires.some(function (w) { return w[0] === key || w[1] === key; });
+        if (!used) loose.push(friendly(key));
+      });
+    });
+    if (loose.length) return { cls: 'warn', html: '⚠ Not connected yet: ' + loose.slice(0, 3).map(esc).join(', ') + (loose.length > 3 ? ' and ' + (loose.length - 3) + ' more' : '') + '.' };
+    return { cls: 'ok', html: '✔ Every pin is connected. <b>Step 3:</b> write your firmware below and press <b>Run tests</b>.' };
+  }
+
+  function draw() {
+    var s = '<rect class="mcu" x="20" y="20" width="130" height="' + (MCU_Y0 + 13 * MCU_DY + 30 - 20) + '" rx="10"/>' +
+      '<text class="mcu-title" x="85" y="42" text-anchor="middle">ARDUINO UNO</text>';
+    MCU_PINS.forEach(function (n) {
+      var xy = mcuPinPos(n), key = 'mcu.' + n;
+      s += '<text class="pinlbl" x="' + (MCU_X - 14) + '" y="' + (xy[1] + 4) + '" text-anchor="end">' + n + '</text>' +
+        '<g class="pin' + (S.pending === key ? ' pending' : '') + (S.pending && S.pending !== key ? ' target' : '') + '" data-pin="' + key + '"><title>' + n + '</title><circle class="pinhit" cx="' + xy[0] + '" cy="' + xy[1] + '" r="12"/><circle class="dot" cx="' + xy[0] + '" cy="' + xy[1] + '" r="6"/></g>';
+    });
+    S.wires.forEach(function (w, i) {
+      var a = pinPos(w[0]), b = pinPos(w[1]), dir = b[0] >= a[0] ? 1 : -1, dx = Math.max(40, Math.abs(b[0] - a[0]) / 2);
+      var d = 'M' + a[0] + ' ' + a[1] + ' C' + (a[0] + dir * dx) + ' ' + a[1] + ' ' + (b[0] - dir * dx) + ' ' + b[1] + ' ' + b[0] + ' ' + b[1];
+      s += '<g class="w' + (S.selWire === i ? ' sel' : '') + '" data-wire="' + i + '"><title>Click to select this wire</title><path class="wire" stroke="' + WIRE_COLORS[i % WIRE_COLORS.length] + '" style="color:' + WIRE_COLORS[i % WIRE_COLORS.length] + '" d="' + d + '"/><path class="wire-hit" d="' + d + '"/></g>';
+    });
+    S.parts.forEach(function (p) {
+      var def = PART_DEFS[p.type];
+      s += '<g class="part' + (S.sel === p.id ? ' sel' : '') + '" transform="translate(' + p.x + ',' + p.y + ')" data-part="' + p.id + '">' +
+        '<rect class="hit" x="-36" y="-30" width="72" height="56" rx="6"/>' + partBody(p.type) +
+        '<text class="name" x="0" y="-34">' + p.id + '</text>';
+      Object.keys(def.pins).forEach(function (pn) {
+        var d = def.pins[pn], key = p.id + '.' + pn;
+        s += '<g class="pin' + (S.pending === key ? ' pending' : '') + (S.pending && S.pending !== key ? ' target' : '') + '" data-pin="' + key + '"><title>' + esc(friendly(key)) + '</title><circle class="pinhit" cx="' + d[0] + '" cy="' + d[1] + '" r="12"/><circle class="dot" cx="' + d[0] + '" cy="' + d[1] + '" r="6"/></g>' +
+          '<text class="plbl" x="' + d[0] + '" y="' + (d[1] + 20) + '" text-anchor="middle">' + def.pl[pn] + '</text>';
+      });
+      s += '</g>';
+    });
+    s += '<path id="preview" class="preview" d=""/>';
+    board.innerHTML = s;
+
+    var used = document.getElementById('used');
+    if (used) used.textContent = S.parts.length;
+    var pal = document.querySelectorAll('[data-add]');
+    Array.prototype.forEach.call(pal, function (b) {
+      var t = b.getAttribute('data-add');
+      b.disabled = countType(t) >= S.problem.limits[t];
+      b.querySelector('.count').textContent = countType(t) + '/' + S.problem.limits[t];
+    });
+    document.getElementById('del').disabled = !S.sel && S.selWire === null;
+    document.getElementById('undo').disabled = !S.hist.length;
+    var st = statusInfo(), el = document.getElementById('status');
+    el.className = 'status ' + st.cls; el.innerHTML = st.html;
+  }
+  function changed() { save(); draw(); }
+
+  function svgPoint(e) {
+    var pt = board.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY;
+    return pt.matrixTransform(board.getScreenCTM().inverse());
+  }
+  function updatePreview(e) {
+    var pv = document.getElementById('preview');
+    if (!pv) return;
+    if (!S.pending) { pv.setAttribute('d', ''); return; }
+    var a = pinPos(S.pending), b = svgPoint(e);
+    pv.setAttribute('d', 'M' + a[0] + ' ' + a[1] + ' L' + b.x.toFixed(1) + ' ' + b.y.toFixed(1));
+  }
+  function clickPin(key) {
+    S.sel = null; S.selWire = null;
+    if (!S.pending) { S.pending = key; draw(); return; }
+    if (S.pending === key) { S.pending = null; draw(); return; }
+    var a = S.pending, dup = S.wires.some(function (w) { return (w[0] === a && w[1] === key) || (w[0] === key && w[1] === a); });
+    if (!dup) { snap(); S.wires.push([a, key]); }
+    S.pending = null; changed();
+  }
+  function deleteSel() {
+    if (!S) return;
+    if (S.selWire !== null) {
+      snap(); S.wires.splice(S.selWire, 1); S.selWire = null; changed(); return;
+    }
+    if (!S.sel) return;
+    var id = S.sel;
+    snap();
+    S.parts = S.parts.filter(function (p) { return p.id !== id; });
+    S.wires = S.wires.filter(function (w) { return w[0].split('.')[0] !== id && w[1].split('.')[0] !== id; });
+    S.sel = null; changed();
+  }
+  document.addEventListener('keydown', function (e) {
+    if (!S) return;
+    var inText = e.target && (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT');
+    if (inText) return;
+    if (e.key === 'Delete' || e.key === 'Backspace') { deleteSel(); e.preventDefault(); }
+    if (e.key === 'Escape') { S.pending = null; S.sel = null; S.selWire = null; draw(); }
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { undo(); e.preventDefault(); }
+  });
+
+  /* ---------- running the judge ---------- */
+  function runJudge(job) {
+    return new Promise(function (resolve) {
+      var src = 'var pressedAt=' + pressedAt.toString() + ';\nvar judge=' + judge.toString() + ';\nonmessage=function(e){postMessage(judge(e.data));};';
+      var w = null, timer = null;
+      try {
+        w = new Worker(URL.createObjectURL(new Blob([src], { type: 'text/javascript' })));
+      } catch (e) {
+        // fallback (no timeout protection): run inline
+        try { resolve(judge(job)); } catch (err) { resolve({ verdict: 'Runtime Error', issues: [String(err)], warnings: [], tests: [], used: job.circuit.parts.length }); }
+        return;
+      }
+      timer = setTimeout(function () {
+        w.terminate();
+        resolve({ verdict: 'Time Limit Exceeded', issues: ['Your firmware ran too long without returning (infinite loop?).'], warnings: [], tests: [], used: job.circuit.parts.length });
+      }, 8000);
+      w.onmessage = function (e) { clearTimeout(timer); w.terminate(); resolve(e.data); };
+      w.onerror = function (e) { clearTimeout(timer); w.terminate(); resolve({ verdict: 'Runtime Error', issues: [String(e.message || 'Worker error')], warnings: [], tests: [], used: job.circuit.parts.length }); };
+      w.postMessage(job);
+    });
+  }
+
+  // merge intervals closer than one pixel so multiplexed LEDs draw as a solid bar
+  function mergeIv(iv, px) {
+    var out = [];
+    iv.forEach(function (x) {
+      var last = out[out.length - 1];
+      if (last && x[0] - last[1] < px * 1.5) last[1] = x[1]; else out.push([x[0], x[1]]);
+    });
+    return out;
+  }
+  function timelineSvg(tl) {
+    var W = 516, X0 = 46, rowH = 16, rows = [], dur = tl.duration;
+    if (tl.input && tl.input.windows) rows.push({ label: 'BTN', cls: 'inp', iv: tl.input.windows });
+    Object.keys(tl.leds).forEach(function (id) { rows.push({ label: id, cls: 'on', iv: tl.leds[id] }); });
+    var h = rows.length * rowH + 16, s = '<svg class="tline" viewBox="0 0 ' + (X0 + W) + ' ' + h + '">';
+    rows.forEach(function (r, i) {
+      var y = i * rowH;
+      s += '<text x="0" y="' + (y + 11) + '">' + r.label + '</text><rect class="track" x="' + X0 + '" y="' + (y + 1) + '" width="' + W + '" height="' + (rowH - 4) + '" rx="2"/>';
+      mergeIv(r.iv, dur / W).forEach(function (iv) {
+        var x = X0 + iv[0] / dur * W, w = Math.max(1, (iv[1] - iv[0]) / dur * W);
+        s += '<rect class="' + r.cls + '" x="' + x.toFixed(1) + '" y="' + (y + 1) + '" width="' + w.toFixed(1) + '" height="' + (rowH - 4) + '"/>';
+      });
+    });
+    var ay = rows.length * rowH + 10;
+    s += '<text x="' + X0 + '" y="' + ay + '">0</text><text x="' + (X0 + W / 2) + '" y="' + ay + '" text-anchor="middle">' + (dur / 2) + 'ms</text><text x="' + (X0 + W) + '" y="' + ay + '" text-anchor="end">' + dur + 'ms</text></svg>';
+    return s;
+  }
+
+  function nextProblemLink(p) {
+    var i = PROBLEMS.indexOf(p), n = PROBLEMS[i + 1];
+    return n ? '<a href="#/p/' + n.id + '"><b>Next problem: ' + esc(n.title) + ' →</b></a>' : '<a href="#/">Back to all problems →</a>';
+  }
+
+  function showResult(r, submit) {
+    var p = S.problem, el = document.getElementById('result');
+    var ok = r.verdict === 'Accepted';
+    var score = ok ? scoreFor(r.used, p.ref) : 0, rating = ok ? ratingFor(score) : 0;
+    var h = '<div class="verdict ' + (ok ? 'ok' : 'bad') + '">' + esc(r.verdict) + '</div>';
+    h += '<p class="explain">' + esc(VERDICT_HELP[r.verdict] || '') + '</p>';
+    if (!submit) h += '<div class="hint">Practice run: not saved to your submissions. Press <b>Submit</b> to record it.</div>';
+    h += '<div class="stats"><div class="stat"><b>' + r.used + '</b><span>Components used</span></div>';
+    if (ok) {
+      h += '<div class="stat"><b>' + p.ref + '</b><span>Optimal</span></div><div class="stat"><b>' + score + '%</b><span>Score</span></div><div class="stat"><b>' + stars(rating) + '</b><span>Rating</span></div>' +
+        (submit ? '<div class="stat"><b>' + fmtTime(elapsed()) + '</b><span>Time taken</span></div><div class="stat"><b>+' + pointsFor(p, score) + '</b><span>Points</span></div>' : '');
+    }
+    h += '</div>';
+    if (ok && r.used < p.ref) h += '<p class="v-ok">You beat the reference solution — tell the problem setter!</p>';
+    if (ok && r.used > p.ref) h += '<p class="hint">A solution with ' + p.ref + ' components exists. Can you remove ' + (r.used - p.ref) + '?</p>';
+    if (ok) h += '<p>' + nextProblemLink(p) + '</p>';
+    (r.issues || []).forEach(function (m) { h += '<p class="v-bad">' + esc(m) + '</p>'; });
+    (r.warnings || []).forEach(function (m) { h += '<p class="warn">⚠ ' + esc(m) + '</p>'; });
+    if (r.tests.length) {
+      h += '<ul class="tests">';
+      r.tests.forEach(function (t, i) {
+        h += '<li><span class="' + (t.pass ? 'ok' : 'no') + '">' + (t.pass ? '✔' : '✘') + '</span> ' + (t.hidden ? 'Hidden test ' + (i + 1) : esc(t.name));
+        if (!t.pass && t.message) h += '<small>' + esc(t.message) + '</small>';
+        if (!t.hidden) h += timelineSvg(t.timeline);
+        h += '</li>';
+      });
+      h += '</ul>';
+      h += '<p class="hint">The timeline shows when the button was pressed (blue) and when each LED was on (orange).</p>';
+    }
+    if (!ok) h += '<p class="hint">Stuck? Use the <b>Hints</b> card on the left.</p>';
+    el.innerHTML = h; el.hidden = false;
+    el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    if (submit) {
+      var subs = allSubs(), sub = { pid: p.id, user: userKey(), ts: Date.now(), verdict: r.verdict, used: r.used, score: score, time: Math.floor(elapsed()) };
+      subs.unshift(sub);
+      store.set('cc.subs', subs.slice(0, 300));
+      if (ok) { recordBoard(sub); tPause(); }
+      renderSubs();
+    }
+  }
+
+  function renderSubs() {
+    var el = document.getElementById('subs'), mine = mySubs().filter(function (s) { return s.pid === S.problem.id; }).slice(0, 6);
+    if (!mine.length) { el.innerHTML = '<span class="hint">No submissions yet.</span>'; return; }
+    el.innerHTML = '<table class="subs">' + mine.map(function (s) {
+      return '<tr><td class="' + (s.verdict === 'Accepted' ? 'v-ok' : 'v-bad') + '">' + esc(s.verdict) + '</td><td>' + s.used + ' parts</td><td>' + (s.verdict === 'Accepted' ? s.score + '%' : '—') + '</td><td>' + (s.time ? fmtTime(s.time) : '—') +
+        '</td><td class="hint">' + new Date(s.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + '</td></tr>';
+    }).join('') + '</table>';
+  }
+
+  function renderHints() {
+    var el = document.getElementById('hints'), hs = S.problem.hints || [];
+    if (!hs.length) { el.parentNode.hidden = true; return; }
+    var n = S.hintsShown, h = '';
+    if (n) h += '<ol>' + hs.slice(0, n).map(function (x) { return '<li>' + md(x) + '</li>'; }).join('') + '</ol>';
+    else h += '<p class="hint" style="margin-top:0">Try on your own first. Hints get more specific one at a time.</p>';
+    if (n < hs.length) h += '<button id="hintbtn">💡 Show hint ' + (n + 1) + ' of ' + hs.length + '</button>';
+    else h += '<span class="hint">No more hints.</span>';
+    el.innerHTML = h;
+    var b = document.getElementById('hintbtn');
+    if (b) b.addEventListener('click', function () {
+      S.hintsShown++; store.set('cc.h.' + S.problem.id, S.hintsShown); renderHints();
+    });
+  }
+
+  function run(submit) {
+    var p = S.problem, btns = document.querySelectorAll('[data-run]');
+    var el = document.getElementById('result');
+    if (!S.parts.length) {
+      el.hidden = false;
+      el.innerHTML = '<div class="verdict bad">Nothing to test yet</div><p class="explain">Your board is empty. Add the parts you need, connect them with wires, then run the tests again.</p>';
+      el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      return;
+    }
+    var job = {
+      circuit: { parts: S.parts.map(function (x) { return { id: x.id, type: x.type }; }), wires: S.wires },
+      code: S.code, limits: p.limits,
+      tests: p.tests.map(function (t) { return { name: t.name, hidden: !!t.hidden, duration: t.duration, input: t.input || null, check: t.check.toString() }; })
+    };
+    Array.prototype.forEach.call(btns, function (b) { b.disabled = true; });
+    el.hidden = false; el.innerHTML = '<span class="hint">⏳ Judging…</span>';
+    runJudge(job).then(function (r) {
+      Array.prototype.forEach.call(btns, function (b) { b.disabled = false; });
+      showResult(r, submit);
+    });
+  }
+
+  /* ---------- pages ---------- */
+  var filter = 'All';
+
+  function stepsHtml() {
+    return '<div class="steps">' +
+      '<div class="step"><span class="n">1</span><b>Build</b><p>Add parts (LED, resistor, button…) and wire them to the Arduino pins by clicking pin → pin.</p></div>' +
+      '<div class="step"><span class="n">2</span><b>Program</b><p>Write firmware in JavaScript using the Arduino functions: <code>pinMode</code>, <code>digitalWrite</code>, <code>delay</code>…</p></div>' +
+      '<div class="step"><span class="n">3</span><b>Test &amp; score</b><p>Press <b>Run tests</b> to check, <b>Submit</b> to save. Use fewer parts to earn a higher score and more stars.</p></div>' +
+      '</div>';
+  }
+
+  function renderList() {
+    S = null;
+    var solved = PROBLEMS.filter(function (p) { return bestFor(p.id); }).length;
+    var pct = Math.round(solved / PROBLEMS.length * 100);
+    var next = PROBLEMS.filter(function (p) { return !bestFor(p.id); })[0];
+    var h = '';
+    if (!store.get('cc.welcomeHidden', false)) {
+      h += '<div class="banner"><button class="x" id="hidewelcome" aria-label="Dismiss welcome">×</button><h2>Welcome to CircuitCode 👋</h2><div class="hint" style="margin:0">Practice electronics + Arduino programming in your browser. No hardware needed.</div>' + stepsHtml() + '<div class="hint">New to circuits? Read <a href="#/help">How it works</a>.</div></div>';
+    }
+    h += '<h1>Problems</h1><p class="sub">Build the circuit with as few parts as you can, program the board, and get rated. <b>' + solved + ' / ' + PROBLEMS.length + '</b> solved.</p>' +
+      '<div class="progress" title="' + pct + '% solved"><i style="width:' + pct + '%"></i></div>' +
+      '<div class="toolbar">' + ['All', 'Easy', 'Medium', 'Hard', 'Nearly Impossible'].map(function (f) {
+        return '<button class="fchip' + (filter === f ? ' on' : '') + '" data-filter="' + f + '">' + f + '</button>';
+      }).join('') + '<span class="grow"></span>' +
+      (next ? '<a href="#/p/' + next.id + '"><button class="primary">' + (solved ? 'Continue: ' : 'Start: ') + esc(next.title) + ' →</button></a>' : '<span class="v-ok">🎉 All problems solved!</span>') + '</div>' +
+      '<div class="tablewrap"><table class="list"><thead><tr><th>#</th><th>Title</th><th>Difficulty</th><th>Parts provided</th><th>Your best</th></tr></thead><tbody>';
+    var shown = 0;
+    PROBLEMS.forEach(function (p, i) {
+      if (filter !== 'All' && p.difficulty !== filter) return;
+      shown++;
+      var b = bestFor(p.id), total = Object.keys(p.limits).reduce(function (a, k) { return a + p.limits[k]; }, 0);
+      h += '<tr data-go="' + p.id + '"><td>' + (i + 1) + '</td><td><a href="#/p/' + p.id + '">' + esc(p.title) + '</a></td><td><span class="chip ' + dcls(p.difficulty) + '">' + p.difficulty + '</span></td><td>' + total + '</td>' +
+        '<td>' + (b ? '<span class="solved">✔</span> ' + b.used + ' parts · ' + b.score + '% ' + stars(ratingFor(b.score)) + (b.time ? ' <span class="hint">· ' + fmtTime(b.time) + '</span>' : '') : '<span class="hint">Not solved yet</span>') + '</td></tr>';
+    });
+    if (!shown) h += '<tr><td colspan="5" class="hint">No problems in this difficulty yet.</td></tr>';
+    app.innerHTML = h + '</tbody></table></div>';
+
+    var hw = document.getElementById('hidewelcome');
+    if (hw) hw.addEventListener('click', function () { store.set('cc.welcomeHidden', true); renderList(); });
+    Array.prototype.forEach.call(app.querySelectorAll('[data-filter]'), function (b) {
+      b.addEventListener('click', function () { filter = b.getAttribute('data-filter'); renderList(); });
+    });
+    Array.prototype.forEach.call(app.querySelectorAll('[data-go]'), function (tr) {
+      tr.addEventListener('click', function (e) { if (e.target.tagName !== 'A') location.hash = '#/p/' + tr.getAttribute('data-go'); });
+    });
+  }
+
+  function renderHelp() {
+    S = null;
+    app.innerHTML = '<div class="card guide"><a href="#/">← All problems</a><h1 style="margin-top:8px">How CircuitCode works</h1>' +
+      '<p class="sub">A two-minute guide to building and testing your first circuit.</p>' + stepsHtml() +
+      '<h2>Circuit basics</h2><ul>' +
+      '<li><b>LED:</b> has polarity. Current flows from the <b>anode (A, +)</b> to the <b>cathode (K, −)</b>. Backwards = no light.</li>' +
+      '<li><b>Resistor:</b> limits current. An LED with no resistor in its path <b>burns out</b>, and the judge will tell you.</li>' +
+      '<li><b>Push button:</b> connects its two pins only while pressed.</li>' +
+      '<li><b>5V / GND:</b> the power rails. Connecting 5V straight to GND with no resistor is a <b>short circuit</b>.</li>' +
+      '<li><b>Digital pins D2–D13:</b> your firmware sets each one HIGH (5V) or LOW (0V), or reads it as an input.</li></ul>' +
+      '<h2>Using the board</h2><ul>' +
+      '<li>Click an add-button to place a part. Drag it to move it.</li>' +
+      '<li>Click a pin, then another pin to draw a wire. A dashed line follows your cursor while you connect. Hover a pin to see its name.</li>' +
+      '<li>Click a wire or part to select it, then press <span class="kbd">Delete</span>. Made a mistake? <span class="kbd">' + MOD + '+Z</span> undoes it.</li>' +
+      '<li>The status bar under the board always tells you what to do next.</li></ul>' +
+      '<h2>Firmware basics</h2><ul>' +
+      '<li><code>setup()</code> runs once at the start. <code>loop()</code> runs again and again.</li>' +
+      '<li>Set a pin as output with <code>pinMode(5, OUTPUT)</code>, then <code>digitalWrite(5, HIGH)</code> turns it on.</li>' +
+      '<li><code>delay(500)</code> waits half a second.</li>' +
+      '<li>For a button, use <code>pinMode(2, INPUT_PULLUP)</code>. Pressed reads <code>LOW</code>.</li></ul>' +
+      '<h2>Scoring</h2><ul>' +
+      '<li>You pass when all tests (including hidden ones) pass.</li>' +
+      '<li>Score = optimal parts ÷ your parts. Wires are free, so fewer parts is better.</li>' +
+      '<li>★★★ = 100%, ★★ = 70% or more, ★ = accepted.</li>' +
+      '<li>Your work saves automatically in this browser.</li></ul>' +
+      '<p><a href="#/"><button class="primary">Start solving →</button></a></p></div>';
+  }
+
+  function renderProblem(p) {
+    var saved = store.get('cc.p.' + p.id, null);
+    S = { problem: p, parts: saved ? saved.parts : [], wires: saved ? saved.wires : [], code: saved ? saved.code : p.starter, sel: null, selWire: null, pending: null, hist: [], hintsShown: store.get('cc.h.' + p.id, 0), tkey: 'cc.t.' + userKey() + '.' + p.id, autoPaused: false };
+    S.tms = store.get(S.tkey, 0);
+    S.tstart = bestFor(p.id) ? null : Date.now();   // already solved: start paused
+    var types = Object.keys(p.limits).filter(function (t) { return p.limits[t] > 0; });
+    var totalParts = types.reduce(function (a, t) { return a + p.limits[t]; }, 0);
+    var h = '<div class="problem"><div>' +
+      '<div class="card"><a href="#/">← All problems</a><h1 style="margin-top:8px">' + esc(p.title) + '</h1><span class="chip ' + dcls(p.difficulty) + '">' + p.difficulty + '</span>' +
+      '<span class="timer" id="timerbox" title="Time you have spent on this problem"><span>⏱</span><b id="tval">00:00</b><button class="tbtn" id="tpause">⏸ Pause</button><button class="tbtn" id="treset">Reset</button></span><div style="height:12px"></div>' +
+      p.statement.map(function (x) { return '<p>' + md(x) + '</p>'; }).join('') +
+      '<h2>Parts provided</h2><div class="parts-list">' + types.map(function (t) { return '<span>' + p.limits[t] + ' × ' + PART_DEFS[t].label + '</span>'; }).join('') + '</div>' +
+      '<p class="hint" style="margin-top:12px">Pins: digital 2–13, 5V, GND. Score = optimal parts ÷ your parts (max 100%). Wires are free.</p></div>' +
+      '<div class="card hints"><h2>💡 Hints</h2><div id="hints"></div></div>' +
+      '<div class="card"><h2>Your submissions</h2><div id="subs"></div></div></div>' +
+      '<div><div class="card"><h2>Circuit</h2><div class="bar">' +
+      types.map(function (t) { return '<button data-add="' + t + '">+ ' + PART_DEFS[t].label + ' <span class="count"></span></button>'; }).join('') +
+      '<span class="grow"></span><span class="hint" style="margin:0">Parts used: <b id="used">0</b> / ' + totalParts + '</span></div>' +
+      '<div class="bar"><button id="undo" title="Undo (' + MOD + '+Z)">↶ Undo</button><button id="del" class="danger">Delete selected</button><span class="grow"></span><button id="clearw">Clear wires</button><button id="resetc">Reset circuit</button></div>' +
+      '<svg id="board" class="board" viewBox="0 0 720 440" role="img" aria-label="Circuit board editor"></svg>' +
+      '<div id="status" class="status"></div>' +
+      '<div class="hint">Tip: drag parts to move them. Hover a pin to see its name. Your work is saved automatically.</div></div>' +
+      '<div class="card"><h2>Firmware <span class="hint">(JavaScript with the Arduino API)</span></h2>' +
+      '<textarea id="code" class="code" spellcheck="false" aria-label="Firmware code"></textarea>' +
+      '<div class="bar" style="margin:10px 0 0"><button data-run class="primary" id="runbtn">▶ Run tests</button><button data-run class="green" id="subbtn">Submit</button><span class="hint" style="margin:0"><span class="kbd">' + MOD + '+Enter</span> runs tests</span><span class="grow"></span><button id="resetcode">Reset code</button></div>' +
+      '<details class="ref"><summary>Arduino function cheat sheet</summary><table>' +
+      '<tr><td><code>pinMode(pin, mode)</code></td><td><code>OUTPUT</code>, <code>INPUT</code> or <code>INPUT_PULLUP</code></td></tr>' +
+      '<tr><td><code>digitalWrite(pin, v)</code></td><td><code>HIGH</code> (5V) or <code>LOW</code> (0V) on an output pin</td></tr>' +
+      '<tr><td><code>digitalRead(pin)</code></td><td>returns <code>HIGH</code> or <code>LOW</code></td></tr>' +
+      '<tr><td><code>delay(ms)</code></td><td>wait for the given milliseconds</td></tr>' +
+      '<tr><td><code>millis()</code></td><td>milliseconds since start</td></tr>' +
+      '<tr><td><code>setup()</code> / <code>loop()</code></td><td>run once / run forever</td></tr>' +
+      '</table></details></div>' +
+      '<div class="card" id="result" hidden></div></div></div>';
+    app.innerHTML = h;
+
+    board = document.getElementById('board');
+    var ta = document.getElementById('code');
+    ta.value = S.code;
+    ta.addEventListener('input', function () { S.code = ta.value; save(); });
+    ta.addEventListener('keydown', function (e) {
+      if (e.key === 'Tab') { e.preventDefault(); ta.setRangeText('  ', ta.selectionStart, ta.selectionEnd, 'end'); S.code = ta.value; save(); }
+      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); if (!document.getElementById('runbtn').disabled) run(false); }
+    });
+
+    Array.prototype.forEach.call(document.querySelectorAll('[data-add]'), function (b) {
+      b.addEventListener('click', function () {
+        var t = b.getAttribute('data-add');
+        if (countType(t) >= p.limits[t]) return;
+        snap();
+        var n = S.parts.length;
+        S.parts.push({ id: nextId(t), type: t, x: 300 + (n % 3) * 130, y: 80 + Math.floor(n / 3) * 95 });
+        changed();
+      });
+    });
+    document.getElementById('undo').addEventListener('click', undo);
+    document.getElementById('del').addEventListener('click', deleteSel);
+    document.getElementById('clearw').addEventListener('click', function () {
+      if (!S.wires.length) return;
+      if (!confirm('Remove all wires? (You can undo this.)')) return;
+      snap(); S.wires = []; S.pending = null; S.selWire = null; changed();
+    });
+    document.getElementById('resetc').addEventListener('click', function () {
+      if (!S.parts.length && !S.wires.length) return;
+      if (!confirm('Remove all parts and wires? (You can undo this.)')) return;
+      snap(); S.parts = []; S.wires = []; S.sel = null; S.selWire = null; S.pending = null; changed();
+    });
+    document.getElementById('resetcode').addEventListener('click', function () {
+      if (S.code !== p.starter && !confirm('Replace your code with the starter code? This cannot be undone.')) return;
+      S.code = p.starter; ta.value = p.starter; save();
+    });
+    document.getElementById('runbtn').addEventListener('click', function () { run(false); });
+    document.getElementById('subbtn').addEventListener('click', function () { run(true); });
+
+    board.addEventListener('pointerdown', function (e) {
+      var pin = e.target.closest('[data-pin]');
+      if (pin) { clickPin(pin.getAttribute('data-pin')); return; }
+      var wire = e.target.closest('[data-wire]');
+      if (wire) { S.selWire = +wire.getAttribute('data-wire'); S.sel = null; S.pending = null; draw(); return; }
+      var part = e.target.closest('[data-part]');
+      if (part) {
+        var id = part.getAttribute('data-part'), pp = partById(id), pt = svgPoint(e);
+        S.sel = id; S.selWire = null; S.pending = null; drag = { id: id, dx: pt.x - pp.x, dy: pt.y - pp.y, moved: false };
+        try { board.setPointerCapture(e.pointerId); } catch (err) {}
+        draw(); return;
+      }
+      S.sel = null; S.selWire = null; S.pending = null; draw();
+    });
+    board.addEventListener('pointermove', function (e) {
+      if (!drag) { if (S.pending) updatePreview(e); return; }
+      var pt = svgPoint(e), pp = partById(drag.id);
+      var nx = Math.max(210, Math.min(690, Math.round((pt.x - drag.dx) / 10) * 10));
+      var ny = Math.max(50, Math.min(410, Math.round((pt.y - drag.dy) / 10) * 10));
+      if (nx === pp.x && ny === pp.y) return;
+      if (!drag.moved) {
+        // record the position before the first move so Undo can restore it
+        var cur = { x: pp.x, y: pp.y };
+        pp.x = drag.startX = cur.x; pp.y = drag.startY = cur.y;
+        snap(); drag.moved = true;
+      }
+      pp.x = nx; pp.y = ny;
+      draw();
+    });
+    board.addEventListener('pointerup', function () { if (drag) { drag = null; save(); } });
+
+    document.getElementById('tpause').addEventListener('click', function () { if (S.tstart) tPause(); else tResume(); });
+    document.getElementById('treset').addEventListener('click', function () {
+      if (!confirm('Reset the stopwatch for this problem to 00:00?')) return;
+      S.tms = 0; S.tstart = Date.now(); S.autoPaused = false; tPersist(); tUi();
+    });
+    var n = 0;
+    clearInterval(tick);
+    tick = setInterval(function () { if (!S) return; tUi(); if (++n % 10 === 0) tPersist(); }, 500);
+
+    draw(); renderSubs(); renderHints(); tUi();
+  }
+
+  /* ---------- stopwatch ---------- */
+  var tick = null;
+  function elapsed() { return S && S.tkey ? S.tms + (S.tstart ? Date.now() - S.tstart : 0) : 0; }
+  function tPersist() { if (S && S.tkey) store.set(S.tkey, Math.floor(elapsed())); }
+  function tPause() { if (S && S.tkey && S.tstart) { S.tms += Date.now() - S.tstart; S.tstart = null; tPersist(); tUi(); } }
+  function tResume() { if (S && S.tkey && !S.tstart) { S.tstart = Date.now(); tUi(); } }
+  function tUi() {
+    var v = document.getElementById('tval'), b = document.getElementById('tpause'), box = document.getElementById('timerbox');
+    if (!v || !S || !S.tkey) return;
+    v.textContent = fmtTime(elapsed());
+    b.textContent = S.tstart ? '⏸ Pause' : '▶ Resume';
+    box.className = 'timer' + (S.tstart ? ' live' : '');
+  }
+  function stopTimer() {
+    if (S && S.tkey) { tPause(); tPersist(); }
+    clearInterval(tick); tick = null;
+  }
+  // pause automatically while the tab is hidden, resume when it comes back
+  document.addEventListener('visibilitychange', function () {
+    if (!S || !S.tkey) return;
+    if (document.hidden) { if (S.tstart) { tPause(); S.autoPaused = true; } }
+    else if (S.autoPaused) { S.autoPaused = false; tResume(); }
+  });
+  window.addEventListener('pagehide', tPersist);
+
+  /* ---------- points, board, standings ---------- */
+  var BASE = { Easy: 100, Medium: 200, Hard: 300, 'Nearly Impossible': 500 };
+  function pointsFor(p, score) { return Math.round((BASE[p.difficulty] || 100) * score / 100); }
+  function recordBoard(sub) {
+    var u = getUser(), k = userKey(u), b = store.get('cc.board', {}), e = b[k] || { solved: {} };
+    e.name = u.name || u.github || 'Guest'; e.github = u.github; e.photo = u.photo;
+    var cur = e.solved[sub.pid];
+    if (!cur || sub.score > cur.score || (sub.score === cur.score && sub.time < cur.time)) {
+      e.solved[sub.pid] = { score: sub.score, used: sub.used, time: sub.time, ts: sub.ts };
+    }
+    b[k] = e; store.set('cc.board', b);
+  }
+  function standings() {
+    var b = store.get('cc.board', {}), rows = [];
+    Object.keys(b).forEach(function (k) {
+      var e = b[k], pts = 0, stars = 0, time = 0, n = 0;
+      PROBLEMS.forEach(function (p) {
+        var s = e.solved && e.solved[p.id];
+        if (s) { n++; pts += pointsFor(p, s.score); stars += ratingFor(s.score); time += s.time || 0; }
+      });
+      if (n) rows.push({ key: k, name: e.name || 'Guest', github: e.github, photo: e.photo, solved: n, points: pts, stars: stars, time: time });
+    });
+    rows.sort(function (a, c) { return c.points - a.points || a.time - c.time || a.name.localeCompare(c.name); });
+    var rank = 0, prev = null;
+    rows.forEach(function (r, i) {
+      if (!prev || r.points !== prev.points || r.time !== prev.time) rank = i + 1;
+      r.rank = rank; prev = r;
+    });
+    return rows;
+  }
+  function migrateUser(oldK, newK, nu) {
+    var subs = allSubs(), b = store.get('cc.board', {});
+    var taken = !!b[newK] || subs.some(function (s) { return (s.user || 'guest') === newK; });
+    if (!taken && oldK !== newK) {
+      subs.forEach(function (s) { if ((s.user || 'guest') === oldK) s.user = newK; });
+      store.set('cc.subs', subs);
+      if (b[oldK]) { b[newK] = b[oldK]; delete b[oldK]; }
+      PROBLEMS.forEach(function (p) {
+        var v = store.get('cc.t.' + oldK + '.' + p.id, null);
+        if (v !== null) { store.set('cc.t.' + newK + '.' + p.id, v); try { localStorage.removeItem('cc.t.' + oldK + '.' + p.id); } catch (e) {} }
+      });
+    }
+    if (b[newK]) { b[newK].name = nu.name || nu.github || 'Guest'; b[newK].github = nu.github; b[newK].photo = nu.photo; }
+    store.set('cc.board', b);
+  }
+  function resetMine() {
+    var k = userKey(), b = store.get('cc.board', {});
+    store.set('cc.subs', allSubs().filter(function (s) { return (s.user || 'guest') !== k; }));
+    delete b[k]; store.set('cc.board', b);
+    PROBLEMS.forEach(function (p) { try { localStorage.removeItem('cc.t.' + k + '.' + p.id); } catch (e) {} });
+  }
+
+  /* ---------- progress & leaderboard pages ---------- */
+  function renderProgress() {
+    S = null;
+    var u = getUser(), k = userKey(u), subs = mySubs();
+    var solved = 0, stars = 0, pts = 0, scoreSum = 0, spent = 0;
+    var rows = PROBLEMS.map(function (p) {
+      var b = bestFor(p.id), att = subs.filter(function (s) { return s.pid === p.id; }).length, t = store.get('cc.t.' + k + '.' + p.id, 0);
+      spent += t;
+      if (b) { solved++; stars += ratingFor(b.score); pts += pointsFor(p, b.score); scoreSum += b.score; }
+      return { p: p, b: b, att: att, t: t };
+    });
+    var okCount = subs.filter(function (s) { return s.verdict === 'Accepted'; }).length;
+    var acc = subs.length ? Math.round(okCount / subs.length * 100) : 0;
+    var pct = Math.round(solved / PROBLEMS.length * 100);
+    var st = standings(), me = st.filter(function (r) { return r.key === k; })[0];
+    var shown = u.name || (u.github ? '@' + u.github : 'Guest');
+    var h = '<div class="card"><div class="player" style="gap:14px">' + avatarHtml(u, 56) + '<div><h1 style="margin:0">' + esc(shown) + '</h1><div class="sub" style="margin:0">' +
+      (me ? 'Rank <b>#' + me.rank + '</b> of ' + st.length + ' on the <a href="#/leaderboard">leaderboard</a>' : 'Solve a problem to appear on the <a href="#/leaderboard">leaderboard</a>') + '</div></div></div>';
+    if (!u.name && !u.github) h += '<p class="hint">You are playing as Guest. Click your name at the top right to set a username and photo.</p>';
+    h += '<div class="cards">' + [
+      [solved + ' / ' + PROBLEMS.length, 'Problems solved'], [pts, 'Points'], [stars + ' / ' + (PROBLEMS.length * 3), 'Stars'],
+      [solved ? Math.round(scoreSum / solved) + '%' : '—', 'Average score'], [spent ? fmtTime(spent) : '—', 'Time spent'], [subs.length ? acc + '%' : '—', 'Submission accuracy']
+    ].map(function (c) { return '<div class="cardstat"><b>' + c[0] + '</b><span>' + c[1] + '</span></div>'; }).join('') + '</div>' +
+      '<div class="progress" title="' + pct + '% solved"><i style="width:' + pct + '%"></i></div>' +
+      '<div class="tablewrap"><table class="list static"><thead><tr><th>#</th><th>Problem</th><th>Difficulty</th><th>Status</th><th>Attempts</th><th>Best result</th><th>Best time</th><th>Time spent</th></tr></thead><tbody>';
+    rows.forEach(function (r, i) {
+      var status = r.b ? ['Solved', 'Solved'] : (r.att || r.t) ? ['Progress', 'In progress'] : ['New', 'Not started'];
+      h += '<tr><td>' + (i + 1) + '</td><td><a href="#/p/' + r.p.id + '">' + esc(r.p.title) + '</a></td><td><span class="chip ' + dcls(r.p.difficulty) + '">' + r.p.difficulty + '</span></td>' +
+        '<td><span class="chip ' + status[0] + '">' + status[1] + '</span></td><td>' + r.att + '</td>' +
+        '<td>' + (r.b ? r.b.used + ' parts · ' + r.b.score + '% ' + stars_(r.b.score) : '—') + '</td><td>' + (r.b && r.b.time ? fmtTime(r.b.time) : '—') + '</td><td>' + (r.t ? fmtTime(r.t) : '—') + '</td></tr>';
+    });
+    h += '</tbody></table></div></div>';
+    var recent = subs.slice(0, 8);
+    h += '<div class="card"><h2>Recent activity</h2>';
+    if (!recent.length) h += '<span class="hint">No submissions yet. <a href="#/">Pick a problem</a> to get started.</span>';
+    else {
+      h += '<ul class="activity">' + recent.map(function (s) {
+        var p = PROBLEMS.filter(function (x) { return x.id === s.pid; })[0];
+        return '<li><span class="' + (s.verdict === 'Accepted' ? 'v-ok' : 'v-bad') + '">' + esc(s.verdict) + '</span><span>' + esc(p ? p.title : s.pid) + '</span>' +
+          (s.time ? '<span class="hint" style="margin:0">' + fmtTime(s.time) + '</span>' : '') +
+          '<span class="when">' + new Date(s.ts).toLocaleString([], { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) + '</span></li>';
+      }).join('') + '</ul>';
+    }
+    h += '</div><p style="margin-top:16px"><button class="danger" id="resetmine">Reset my progress</button></p>';
+    app.innerHTML = h;
+    wireAvatars(app);
+    document.getElementById('resetmine').addEventListener('click', function () {
+      if (!confirm('Delete all your submissions, times and leaderboard entry? This cannot be undone.')) return;
+      resetMine(); renderProgress();
+    });
+  }
+  function stars_(score) { return stars(ratingFor(score)); }
+
+  function renderLeaderboard() {
+    S = null;
+    var rows = standings(), k = userKey(), u = getUser(), me = rows.filter(function (r) { return r.key === k; })[0];
+    var h = '<h1>Leaderboard</h1><p class="sub">Ranked by points. Each solved problem earns its difficulty value (Easy 100, Medium 200, Hard 300, Nearly Impossible 500) × your score %. Ties go to the player with less total time.</p>';
+    if (me) h += '<div class="banner" style="padding:12px 16px">Your rank: <b>#' + me.rank + '</b> of ' + rows.length + ' · ' + me.points + ' points</div>';
+    else h += '<div class="banner" style="padding:12px 16px">You are not ranked yet. <a href="#/">Solve a problem</a> and press Submit to join the board.' +
+      ((u.name || u.github) ? '' : ' Set your name at the top right first so others can recognise you.') + '</div>';
+    h += '<div class="tablewrap"><table class="list static"><thead><tr><th>Rank</th><th>Player</th><th>Solved</th><th>Points</th><th>Stars</th><th>Total time</th></tr></thead><tbody>';
+    var medals = ['🥇', '🥈', '🥉'];
+    rows.forEach(function (r) {
+      h += '<tr' + (r.key === k ? ' class="me"' : '') + '><td class="rankcell">' + (r.rank <= 3 ? medals[r.rank - 1] + ' ' : '') + '#' + r.rank + '</td>' +
+        '<td><div class="player">' + avatarHtml({ name: r.name, github: r.github, photo: r.photo }, 28) + '<span>' + esc(r.name) + (r.key === k ? ' <span class="hint">(you)</span>' : '') + '</span></div></td>' +
+        '<td>' + r.solved + ' / ' + PROBLEMS.length + '</td><td><b>' + r.points + '</b></td><td><span class="stars">★</span> ' + r.stars + '</td><td>' + fmtTime(r.time) + '</td></tr>';
+    });
+    if (!rows.length) h += '<tr><td colspan="6" class="hint">No one is on the board yet. Be the first!</td></tr>';
+    h += '</tbody></table></div><p class="hint">This leaderboard is stored in this browser, so it ranks everyone who plays on this device. A shared online ranking needs a small server.</p>';
+    app.innerHTML = h;
+    wireAvatars(app);
+  }
+
+  /* ---------- profile (username + photo) ---------- */
+  function getUser() { return store.get('cc.user', { name: '', github: '', photo: '' }); }
+  function avatarHtml(u, size) {
+    var label = (u.name || u.github || '?').trim().charAt(0).toUpperCase() || '?';
+    var src = u.photo || (u.github ? 'https://github.com/' + encodeURIComponent(u.github) + '.png?size=' + (size * 2) : '');
+    var fb = '<span class="avatar-fb" style="width:' + size + 'px;height:' + size + 'px;font-size:' + Math.round(size * 0.45) + 'px">' + esc(label) + '</span>';
+    if (!src) return fb;
+    return '<img class="avatar" width="' + size + '" height="' + size + '" src="' + esc(src) + '" alt="" data-fb="' + esc(fb) + '">';
+  }
+  function wireAvatars(root) {
+    Array.prototype.forEach.call(root.querySelectorAll('img.avatar'), function (img) {
+      img.addEventListener('error', function () { img.outerHTML = img.getAttribute('data-fb'); });
+    });
+  }
+  function renderProfile() {
+    var btn = document.getElementById('profilebtn'), u = getUser();
+    var shown = u.name || (u.github ? '@' + u.github : '');
+    btn.innerHTML = avatarHtml(u, 28) + '<span class="uname">' + esc(shown || 'Set up profile') + '</span>';
+    btn.title = u.github ? 'GitHub: @' + u.github : 'Click to set your username and photo';
+    wireAvatars(btn);
+  }
+  function openProfile() {
+    var u = getUser(), photo = u.photo;
+    var ov = document.createElement('div');
+    ov.className = 'overlay';
+    ov.innerHTML = '<div class="modal" role="dialog" aria-label="Your profile"><h2>Your profile</h2>' +
+      '<div class="pickrow"><span id="pv"></span><div><input type="file" id="pfile" accept="image/*" hidden><button id="ppick">Upload photo</button> <button id="pclear">Remove</button>' +
+      '<div class="hint">Or leave it empty to use your GitHub photo.</div></div></div>' +
+      '<label for="pname">Display name</label><input type="text" id="pname" maxlength="30" placeholder="e.g. Somya" value="' + esc(u.name) + '">' +
+      '<label for="pgh">GitHub username</label><input type="text" id="pgh" maxlength="39" placeholder="e.g. somya26" value="' + esc(u.github) + '">' +
+      '<div class="btns"><button id="pcancel">Cancel</button><button class="primary" id="psave">Save</button></div></div>';
+    document.body.appendChild(ov);
+    var pv = ov.querySelector('#pv'), pname = ov.querySelector('#pname'), pgh = ov.querySelector('#pgh');
+    function preview() {
+      pv.innerHTML = avatarHtml({ name: pname.value, github: pgh.value.trim().replace(/^@/, ''), photo: photo }, 64);
+      wireAvatars(pv);
+    }
+    function close() { document.removeEventListener('keydown', onKey); ov.remove(); }
+    function onKey(e) { if (e.key === 'Escape') close(); }
+    document.addEventListener('keydown', onKey);
+    ov.addEventListener('pointerdown', function (e) { if (e.target === ov) close(); });
+    pname.addEventListener('input', preview);
+    pgh.addEventListener('change', preview);
+    ov.querySelector('#ppick').addEventListener('click', function () { ov.querySelector('#pfile').click(); });
+    ov.querySelector('#pclear').addEventListener('click', function () { photo = ''; preview(); });
+    ov.querySelector('#pfile').addEventListener('change', function (e) {
+      var f = e.target.files && e.target.files[0];
+      if (!f) return;
+      var img = new Image(), url = URL.createObjectURL(f);
+      img.onload = function () {
+        var c = document.createElement('canvas'), n = 128, s = Math.min(img.width, img.height);
+        c.width = c.height = n;
+        c.getContext('2d').drawImage(img, (img.width - s) / 2, (img.height - s) / 2, s, s, 0, 0, n, n);
+        photo = c.toDataURL('image/jpeg', 0.85);
+        URL.revokeObjectURL(url); preview();
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); alert('Could not read that image. Try a JPG or PNG.'); };
+      img.src = url;
+    });
+    ov.querySelector('#pcancel').addEventListener('click', close);
+    ov.querySelector('#psave').addEventListener('click', function () {
+      var nu = { name: pname.value.trim(), github: pgh.value.trim().replace(/^@/, ''), photo: photo };
+      var oldK = userKey(u), newK = userKey(nu);
+      stopTimer();
+      migrateUser(oldK, newK, nu);
+      store.set('cc.user', nu);
+      renderProfile(); close(); route();
+    });
+    preview(); pname.focus();
+  }
+  document.getElementById('profilebtn').addEventListener('click', openProfile);
+  renderProfile();
+
+  function route() {
+    stopTimer();
+    var hash = location.hash || '#/';
+    var m = hash.match(/^#\/p\/(.+)$/);
+    var p = m && PROBLEMS.filter(function (x) { return x.id === m[1]; })[0];
+    drag = null;
+    if (p) renderProblem(p);
+    else if (hash === '#/help') renderHelp();
+    else if (hash === '#/progress') renderProgress();
+    else if (hash === '#/leaderboard') renderLeaderboard();
+    else renderList();
+    var here = p ? '#/' : (['#/help', '#/progress', '#/leaderboard'].indexOf(hash) >= 0 ? hash : '#/');
+    Array.prototype.forEach.call(document.querySelectorAll('.top nav a'), function (a) { a.classList.toggle('active', a.getAttribute('href') === here); });
+    window.scrollTo(0, 0);
+  }
+  window.addEventListener('hashchange', route);
+  route();
+})();
+
+</script>
+</body>
+</html>
