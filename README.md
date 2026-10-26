@@ -1,2 +1,0 @@
-# ECEUREKA
-hardware design code
