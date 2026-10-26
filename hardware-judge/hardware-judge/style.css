@@ -1,0 +1,92 @@
+:root {
+  --bg: #0f1419; --panel: #171d25; --panel2: #1e2631; --line: #2a3441;
+  --text: #e6edf3; --muted: #8b98a8; --accent: #f5a524; --good: #3fb950; --bad: #f85149; --info: #58a6ff;
+  --easy: #3fb950; --medium: #f5a524; --hard: #f85149;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+a { color: var(--info); text-decoration: none; }
+code { font-family: var(--mono); background: var(--panel2); padding: 1px 6px; border-radius: 4px; font-size: .9em; }
+
+.top { display: flex; align-items: center; gap: 14px; padding: 12px 24px; border-bottom: 1px solid var(--line); background: var(--panel); position: sticky; top: 0; z-index: 5; }
+.brand { color: var(--text); font-weight: 700; font-size: 18px; letter-spacing: .2px; }
+.logo { color: var(--accent); }
+.tag { color: var(--muted); font-size: 12px; }
+main { max-width: 1280px; margin: 0 auto; padding: 24px; }
+
+h1 { font-size: 26px; margin: 0 0 4px; }
+h2 { font-size: 16px; margin: 0 0 10px; }
+.sub { color: var(--muted); margin: 0 0 20px; }
+
+.chip { display: inline-block; font-size: 12px; font-weight: 600; padding: 2px 10px; border-radius: 999px; border: 1px solid currentColor; }
+.chip.Easy { color: var(--easy); } .chip.Medium { color: var(--medium); } .chip.Hard { color: var(--hard); }
+
+/* problem list */
+.list { width: 100%; border-collapse: collapse; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.list th, .list td { text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--line); }
+.list th { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .6px; background: var(--panel2); }
+.list tr:last-child td { border-bottom: 0; }
+.list tbody tr:hover { background: var(--panel2); }
+.list td a { color: var(--text); font-weight: 600; }
+.stars { color: var(--accent); letter-spacing: 2px; white-space: nowrap; }
+.stars .off { color: #3a4452; }
+.solved { color: var(--good); }
+
+/* problem page */
+.problem { display: grid; grid-template-columns: 380px 1fr; gap: 20px; align-items: start; }
+@media (max-width: 1000px) { .problem { grid-template-columns: 1fr; } }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; }
+.card + .card { margin-top: 16px; }
+.card p { margin: 0 0 10px; }
+.parts-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+.parts-list span { background: var(--panel2); border: 1px solid var(--line); padding: 3px 10px; border-radius: 6px; font-size: 13px; }
+.subs { width: 100%; border-collapse: collapse; font-size: 13px; }
+.subs td { padding: 5px 4px; border-top: 1px solid var(--line); }
+.v-ok { color: var(--good); font-weight: 600; } .v-bad { color: var(--bad); font-weight: 600; }
+
+.bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 10px; }
+.bar .grow { flex: 1; }
+button { font: inherit; cursor: pointer; border: 1px solid var(--line); background: var(--panel2); color: var(--text); padding: 6px 12px; border-radius: 7px; }
+button:hover:not(:disabled) { border-color: var(--muted); }
+button:disabled { opacity: .4; cursor: not-allowed; }
+button.primary { background: var(--accent); color: #1a1200; border-color: var(--accent); font-weight: 700; }
+button.green { background: var(--good); color: #04130a; border-color: var(--good); font-weight: 700; }
+button.danger { color: var(--bad); }
+.count { color: var(--muted); font-size: 12px; margin-left: 4px; }
+
+svg.board { width: 100%; height: auto; background: #0b1016; border: 1px solid var(--line); border-radius: 8px; touch-action: none; user-select: none; display: block; }
+.board .mcu { fill: #0d4f4c; stroke: #17807b; stroke-width: 2; }
+.board .mcu-title { fill: #9ee7e1; font: 700 12px var(--mono); }
+.board .pinlbl { fill: #bfeeea; font: 11px var(--mono); }
+.board .plbl { fill: var(--muted); font: 10px var(--mono); }
+.board .pin circle { fill: #c9d1d9; stroke: #0b1016; stroke-width: 2; cursor: crosshair; }
+.board .pin:hover circle { fill: var(--accent); }
+.board .pin.pending circle { fill: var(--accent); stroke: #fff; }
+.board .part .body { stroke: #c9d1d9; stroke-width: 2; fill: none; }
+.board .part.sel .hit { fill: rgba(88,166,255,.12); stroke: var(--info); stroke-dasharray: 4 3; }
+.board .part .hit { fill: transparent; cursor: grab; }
+.board .part .name { fill: var(--muted); font: 11px var(--mono); text-anchor: middle; }
+.board .wire { fill: none; stroke-width: 3; stroke-linecap: round; opacity: .95; }
+.board .wire-hit { fill: none; stroke: transparent; stroke-width: 14; cursor: pointer; }
+.board g.w:hover .wire { stroke-width: 5; opacity: 1; }
+.hint { color: var(--muted); font-size: 12px; margin-top: 6px; }
+
+textarea.code { width: 100%; height: 260px; resize: vertical; background: #0b1016; color: #d6e2ee; border: 1px solid var(--line); border-radius: 8px; padding: 12px; font: 13.5px/1.55 var(--mono); tab-size: 2; outline: none; }
+textarea.code:focus { border-color: var(--info); }
+
+/* results */
+.verdict { font-size: 22px; font-weight: 800; margin: 0 0 4px; }
+.verdict.ok { color: var(--good); } .verdict.bad { color: var(--bad); }
+.stats { display: flex; flex-wrap: wrap; gap: 24px; margin: 8px 0 14px; }
+.stat b { display: block; font-size: 22px; }
+.stat span { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .5px; }
+.tests { list-style: none; margin: 0; padding: 0; }
+.tests li { padding: 8px 0; border-top: 1px solid var(--line); }
+.tests .ok { color: var(--good); } .tests .no { color: var(--bad); }
+.tests small { display: block; color: var(--muted); margin-left: 22px; }
+.warn { color: var(--medium); font-size: 13px; }
+.tline { width: 100%; height: auto; margin: 6px 0 2px 22px; max-width: calc(100% - 22px); }
+.tline text { fill: var(--muted); font: 10px var(--mono); }
+.tline .on { fill: var(--accent); } .tline .inp { fill: var(--info); }
+.tline .track { fill: #0b1016; }
